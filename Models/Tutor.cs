@@ -43,5 +43,18 @@ namespace ProntPet.Models
 
         // Um Tutor tem muitos Pets
         //public ICollection<Pet> Pets { get; set; } = new List<Pet>();
+
+
+        public void Update(string name, string cpf, string phone, string email, string password, string address)
+        {
+            this.Name = name;
+            this.Cpf = cpf;
+            this.Phone = phone;
+            this.Email = email;
+            this.Password = password;
+            this.Address = address;
+        }
+
+
     }
 }
