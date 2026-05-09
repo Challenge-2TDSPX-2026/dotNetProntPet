@@ -47,5 +47,17 @@ namespace ProntPet.Controllers
             return CreatedAtAction(nameof(GetById), new { id = tutor.Id }, tutor);
         }
 
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Tutor updatedTutor)
+        {
+            var tutor = await _context.Tutors.FindAsync(id);
+            if (tutor == null) return NotFound();
+            tutor.Update(updatedTutor.Name, updatedTutor.Cpf, updatedTutor.Phone, updatedTutor.Email, updatedTutor.Password, updatedTutor.Address);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+
     }
 }
