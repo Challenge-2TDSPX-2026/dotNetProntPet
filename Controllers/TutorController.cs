@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProntPet.Data;
+using ProntPet.dtos;
+using ProntPet.Dtos;
 using ProntPet.Models;
 
 namespace ProntPet.Controllers
@@ -28,7 +30,10 @@ namespace ProntPet.Controllers
         public async Task<IActionResult> GetAll()
         {
             var tutors = await _context.Tutors.ToListAsync();
-            return Ok(tutors);
+
+            var response = tutors.Select(t => TutorResponse.FromEntity(t));
+
+            return Ok(response);
         }
 
         [HttpGet("{id}")]
@@ -36,12 +41,13 @@ namespace ProntPet.Controllers
         {
             var tutor = await _context.Tutors.FindAsync(id);
             if (tutor == null) return NotFound();
-            return Ok(tutor);
+            return Ok(TutorResponse.FromEntity(tutor));
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Tutor tutor)
+        public async Task<IActionResult> Create(TutorRequest tutorRequest)
         {
+            var tutor = tutorRequest.ToEntity();
             _context.Tutors.Add(tutor);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = tutor.Id }, tutor);
@@ -49,10 +55,12 @@ namespace ProntPet.Controllers
 
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Tutor updatedTutor)
+        public async Task<IActionResult> Update(int id, [FromBody] TutorRequest updatedTutor)
         {
             var tutor = await _context.Tutors.FindAsync(id);
+
             if (tutor == null) return NotFound();
+            
             tutor.Update(updatedTutor.Name, updatedTutor.Cpf, updatedTutor.Phone, updatedTutor.Email, updatedTutor.Password, updatedTutor.Address);
             await _context.SaveChangesAsync();
             return NoContent();
