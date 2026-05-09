@@ -60,8 +60,18 @@ namespace ProntPet.Controllers
             var tutor = await _context.Tutors.FindAsync(id);
 
             if (tutor == null) return NotFound();
-            
+
             tutor.Update(updatedTutor.Name, updatedTutor.Cpf, updatedTutor.Phone, updatedTutor.Email, updatedTutor.Password, updatedTutor.Address);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var tutor = await _context.Tutors.FindAsync(id);
+            if (tutor == null) return  NotFound();
+            _context.Tutors.Remove(tutor);
             await _context.SaveChangesAsync();
             return NoContent();
         }
