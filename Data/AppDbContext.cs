@@ -11,6 +11,7 @@ namespace ProntPet.Data
         }
 
         public DbSet<Tutor> Tutors { get; set; }
+        public DbSet<Pet> Pets { get; set; }
 
         
     }

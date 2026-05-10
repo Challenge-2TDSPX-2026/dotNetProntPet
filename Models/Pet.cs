@@ -43,4 +43,16 @@ public class Pet
     [MaxLength(15)]
     [Column("SEX")]
     public string Sex { get; set; }
+
+
+    public void Update(string name, string species, string breed, int age, decimal weight, string sex)
+    {
+        this.Name = name;
+        this.Species = species;
+        this.Breed = breed;
+        this.Age = age;
+        this.Weight = weight;
+        this.Sex = sex;
+    }
+
 }

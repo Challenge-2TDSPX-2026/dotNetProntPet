@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using ProntPet.Data;
 using ProntPet.dtos;
 using ProntPet.Dtos;
-using ProntPet.Models;
 
 namespace ProntPet.Controllers
 {
