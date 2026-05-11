@@ -24,20 +24,20 @@ public class Vaccination
     [MaxLength(50)]
     [Required]
     [Column("VACCINE_NAME")]
-    public string VaccineName;
+    public string VaccineName {get; set; }
 
     [Required]
     [Column("APPLICATION_DATE")]
-    public DateOnly ApplicationDate;
+    public DateOnly ApplicationDate {get; set; }
 
     [Required]
     [Column("EXPIRATION_DATE")]
-    public DateOnly ExpirationDate;
+    public DateOnly ExpirationDate {get; set; }
 
     [MaxLength(10)]
     [Required]
     [Column("LOT")]
-    public string Lot;
+    public string Lot {get; set; }
 
     public void Update(string vaccineName, DateOnly applicationDate, 
                         DateOnly expirationDate, string lot)

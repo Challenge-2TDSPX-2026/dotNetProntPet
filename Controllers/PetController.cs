@@ -20,7 +20,7 @@ namespace ProntPet.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> getPetsByTutor(int idTutor)
+        public async Task<IActionResult> GetPetsByTutor(int idTutor)
         {
             var pets = await _context
                 .Pets.Where(r => r.IdTutor == idTutor).ToListAsync();
