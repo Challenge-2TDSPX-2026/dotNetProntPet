@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProntPet.Data;
+using ProntPet.Dtos;
 using ProntPet.Models;
 
 namespace ProntPet.Controllers
@@ -28,16 +29,17 @@ namespace ProntPet.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Vaccination vaccination)
+        public async Task<IActionResult> Create([FromBody] VaccinationRequest request)
         {
             var petExists = await _context
-                .Pets.AnyAsync(p => p.Id == vaccination.IdPet);
+                .Pets.AnyAsync(p => p.Id == request.IdPet);
 
             if (!petExists)
             {
-                return NotFound($"O pet de id {vaccination.IdPet} não foi encontrado!");
+                return NotFound($"O pet de id {request.IdPet} não foi encontrado!");
             }
 
+            var vaccination = request.ToEntity();
             _context.Vaccinations.Add(vaccination);
             await _context.SaveChangesAsync();
 
