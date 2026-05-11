@@ -45,7 +45,8 @@ namespace ProntPet.Models
         //public ICollection<Pet> Pets { get; set; } = new List<Pet>();
 
 
-        public void Update(string name, string cpf, string phone, string email, string password, string address)
+        public void Update(string name, string cpf, string phone, string email,
+                            string password, string address)
         {
             this.Name = name;
             this.Cpf = cpf;
