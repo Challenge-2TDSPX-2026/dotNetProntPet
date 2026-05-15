@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProntPet.Data;
+using ProntPet.Dtos;
 using ProntPet.Models;
 
 namespace ProntPet.Controllers
@@ -27,17 +28,17 @@ namespace ProntPet.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] MedicalRecord record)
+        public async Task<IActionResult> Create([FromBody] MedicalRecordRequest recordRequest)
         {
             var petExists = await _context
-                .Pets.AnyAsync(p => p.Id == record.IdPet);
+                .Pets.AnyAsync(p => p.Id == recordRequest.IdPet);
 
             if (!petExists)
             {
-                return NotFound($"O pet de id {record.IdPet} não foi encontrado!");
+                return NotFound($"O pet de id {recordRequest.IdPet} não foi encontrado!");
             }
 
-            //var record = request.ToEntity();
+            var record = recordRequest.ToEntity();
             _context.MedicalRecords.Add(record);
             await _context.SaveChangesAsync();
 
