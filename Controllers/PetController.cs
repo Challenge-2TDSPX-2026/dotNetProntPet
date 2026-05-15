@@ -55,7 +55,7 @@ namespace ProntPet.Controllers
 
             if (pet == null) return NotFound($"Pet de id {id} não encontrado");
 
-            pet.Update(updatedPet.Name, updatedPet.Species, updatedPet.Breed, updatedPet.Age, 
+            pet.Update(updatedPet.Name, updatedPet.Species, updatedPet.Breed, updatedPet.BirthDate.ToDateTime(TimeOnly.MinValue), 
                         updatedPet.Weight, updatedPet.Sex);
 
             await _context.SaveChangesAsync();

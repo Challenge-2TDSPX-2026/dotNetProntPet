@@ -33,8 +33,8 @@ public class Pet
     [Column("BREED")]
     public string Breed { get; set; }
 
-    [Column("AGE")]
-    public int Age { get; set; }
+    [Column("BIRTH_DATE")]
+    public DateTime? BirthDate { get; set; }
 
     [Column("WEIGHT", TypeName = "NUMBER(5,2)")]
     public decimal Weight { get; set; }
@@ -45,13 +45,13 @@ public class Pet
     public string Sex { get; set; }
 
 
-    public void Update(string name, string species, string breed, int age,
+    public void Update(string name, string species, string breed, DateTime birthDate,
                          decimal weight, string sex)
     {
         this.Name = name;
         this.Species = species;
         this.Breed = breed;
-        this.Age = age;
+        this.BirthDate = birthDate;
         this.Weight = weight;
         this.Sex = sex;
     }

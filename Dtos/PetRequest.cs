@@ -7,7 +7,7 @@ public record class PetRequest(
     string Name,
     string Species,
     string Breed,
-    int Age,
+    DateOnly BirthDate,
     decimal Weight,
     string Sex
 )
@@ -20,7 +20,7 @@ public record class PetRequest(
             Name = this.Name,
             Species = this.Species,
             Breed = this.Breed,
-            Age = this.Age,
+            BirthDate = this.BirthDate.ToDateTime(TimeOnly.MinValue),
             Weight = this.Weight,
             Sex = this.Sex
 

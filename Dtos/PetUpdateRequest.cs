@@ -6,7 +6,7 @@ public record class PetUpdateRequest(
     [Required] string Name,
     [Required] string Species,
     string Breed,
-    int Age,
+    DateOnly BirthDate,
     decimal Weight,
     [Required] string Sex
 )
