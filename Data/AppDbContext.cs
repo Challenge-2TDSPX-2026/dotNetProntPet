@@ -14,6 +14,8 @@ namespace ProntPet.Data
         public DbSet<Pet> Pets { get; set; }
         public DbSet<Vaccination> Vaccinations { get; set; }
         public DbSet<MedicalRecord> MedicalRecords { get; set; }
+        public DbSet<Clinic> Clinics { get; set; }
+        public DbSet<Consultation> Consultations { get; set; }
 
         
     }
