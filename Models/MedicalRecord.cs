@@ -31,25 +31,25 @@ public class MedicalRecord
 
     [MaxLength(500)]
     [Column("ALLERGIES")]
-    public string Allergies { get; set; }
+    public string? Allergies { get; set; }
 
     [MaxLength(500)]
     [Column("CHRONIC_DISEASES")]
-    public string ChronicDiseases { get; set; }
+    public string? ChronicDiseases { get; set; }
 
     [Required]
     [Column("IS_CASTRATED")]
-    public bool IsCastrated { get; set; }
+    public bool? IsCastrated { get; set; }
 
     [MaxLength(50)]
     [Column("MICROCHIP_CODE")]
-    public string MicrochipCode { get; set; }
+    public string? MicrochipCode { get; set; }
 
     [Required]
     [Column("LAST_UPDATE")]
     public DateTime LastUpdate { get; set; }
 
-    public void Update(string bloodType, string allergies, string chronicDiseases, bool isCastrated, string microchipCode, DateTime lastUpdate )
+    public void Update(string bloodType, string? allergies, string? chronicDiseases, bool? isCastrated, string? microchipCode, DateTime lastUpdate )
     {
         this.BloodType = bloodType;
         this.Allergies = allergies;

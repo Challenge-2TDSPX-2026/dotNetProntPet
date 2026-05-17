@@ -22,7 +22,7 @@ public class Pet
 
     [MaxLength(100)]
     [Column("NAME")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [Required(ErrorMessage = "A Espécie do pet é obrigatória")]
     [MaxLength(50)]
@@ -31,13 +31,13 @@ public class Pet
 
     [MaxLength(50)]
     [Column("BREED")]
-    public string Breed { get; set; }
+    public string? Breed { get; set; }
 
     [Column("BIRTH_DATE")]
     public DateTime? BirthDate { get; set; }
 
     [Column("WEIGHT", TypeName = "NUMBER(5,2)")]
-    public decimal Weight { get; set; }
+    public decimal? Weight { get; set; }
 
     [Required(ErrorMessage = "O Sexo do pet é obrigatório")]
     [MaxLength(15)]
@@ -45,8 +45,8 @@ public class Pet
     public string Sex { get; set; }
 
 
-    public void Update(string name, string species, string breed, DateTime birthDate,
-                         decimal weight, string sex)
+    public void Update(string? name, string species, string? breed, DateTime? birthDate,
+                         decimal? weight, string sex)
     {
         this.Name = name;
         this.Species = species;

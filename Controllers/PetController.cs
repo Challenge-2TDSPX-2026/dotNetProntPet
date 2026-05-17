@@ -49,13 +49,16 @@ namespace ProntPet.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] PetUpdateRequest updatedPet)
+        public async Task<IActionResult> Update(int id, [FromBody] PetUpdateRequest request)
         {
+
+            var updatedPet = request.ToEntity();
+
             var pet = await _context.Pets.FindAsync(id);
 
             if (pet == null) return NotFound($"Pet de id {id} não encontrado");
 
-            pet.Update(updatedPet.Name, updatedPet.Species, updatedPet.Breed, updatedPet.BirthDate.ToDateTime(TimeOnly.MinValue), 
+            pet.Update(updatedPet.Name, updatedPet.Species, updatedPet.Breed, updatedPet.BirthDate, 
                         updatedPet.Weight, updatedPet.Sex);
 
             await _context.SaveChangesAsync();

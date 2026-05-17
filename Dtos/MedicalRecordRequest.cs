@@ -6,10 +6,10 @@ namespace ProntPet.Dtos;
 public record class MedicalRecordRequest(
     int IdPet,
     string BloodType,
-    string Allergies,
-    string ChronicDiseases,
-    bool IsCastrated,
-    string MicrochipCode,
+    string? Allergies,
+    string? ChronicDiseases,
+    bool? IsCastrated,
+    string? MicrochipCode,
     DateOnly LastUpdate
 )
 {

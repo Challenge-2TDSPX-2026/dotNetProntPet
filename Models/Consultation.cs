@@ -45,7 +45,7 @@ public class Consultation
     public string? Observations { get; set; }
 
 
-    public void Update(DateTime consultationDate, string symptoms, string diagnosis, string observations)
+    public void Update(DateTime consultationDate, string? symptoms, string? diagnosis, string? observations)
     {
         this.ConsultationDate = consultationDate;
         this.Symptoms =  symptoms;

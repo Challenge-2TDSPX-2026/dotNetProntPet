@@ -48,8 +48,11 @@ namespace ProntPet.Controllers
 
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] MedicalRecord updatedRecord)
+        public async Task<IActionResult> Update(int id, [FromBody] MedicalRecordRequest updatedRecordRequest)
         {
+
+            var updatedRecord = updatedRecordRequest.ToEntity(); 
+
             var record = await _context.MedicalRecords.FindAsync(id);
 
             if (record == null) return NotFound($"O Protuário de id {id} não encontrado!");

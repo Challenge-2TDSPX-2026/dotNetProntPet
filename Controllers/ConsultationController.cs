@@ -18,7 +18,7 @@ namespace ProntPet.Controllers
             _context = context;
         }
 
-        [HttpGet]
+        [HttpGet("medical-record/{idRecord}")]
         public async Task<IActionResult> GetConsultationsByMedicalRecord(int idRecord)
         {
             var consultations = await _context
@@ -31,7 +31,7 @@ namespace ProntPet.Controllers
             
         }
 
-        [HttpGet]
+        [HttpGet("clinic/{idClinic}")]
         public async Task<IActionResult> GetConsultationsByClinic(int idClinic)
         {
             var consultations = await _context
@@ -43,8 +43,10 @@ namespace ProntPet.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Consultation consultation)
+        public async Task<IActionResult> Create([FromBody] ConsultationRequest consultationRequest)
         {
+            // Converte para entidade
+            var consultation = consultationRequest.ToEntity();
             // verifica se o prontuário existe
             var recordExists = await _context
                 .MedicalRecords
@@ -74,8 +76,11 @@ namespace ProntPet.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Consultation updatedConsultation)
+        public async Task<IActionResult> Update(int id, [FromBody] ConsultationRequest request)
         {
+
+            var updatedConsultation = request.ToEntity();
+
             var consultation = await _context.Consultations.FindAsync(id);
             if (consultation == null) return NotFound();
             consultation.Update(updatedConsultation.ConsultationDate, updatedConsultation.Symptoms, updatedConsultation.Diagnosis, updatedConsultation.Observations);

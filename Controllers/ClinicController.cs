@@ -35,16 +35,19 @@ namespace ProntPet.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Clinic clinic)
+        public async Task<IActionResult> Create([FromBody] ClinicRequest clinicRequest)
         {
+            var clinic = clinicRequest.ToEntity();
             _context.Clinics.Add(clinic);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = clinic.Id }, clinic);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Clinic updatedClinic)
+        public async Task<IActionResult> Update(int id, [FromBody] ClinicRequest updatedClinicRequest)
         {
+            // Converte de dto para entidade
+            var updatedClinic = updatedClinicRequest.ToEntity();
             // verifica se existe
             var clinic = await _context.Clinics.FindAsync(id);
             if (clinic == null) return NotFound();

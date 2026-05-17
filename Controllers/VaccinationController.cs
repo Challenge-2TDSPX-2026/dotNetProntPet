@@ -49,7 +49,7 @@ namespace ProntPet.Controllers
 
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Vaccination updatedVaccination)
+        public async Task<IActionResult> Update(int id, [FromBody] VaccinationRequest updatedVaccination)
         {
             var vaccination = await _context.Vaccinations.FindAsync(id);
 
