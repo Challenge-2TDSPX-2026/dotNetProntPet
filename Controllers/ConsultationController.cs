@@ -43,6 +43,16 @@ namespace ProntPet.Controllers
             
         }
 
+        /// <summary>
+        /// Obtém uma consulta pelo identificador.
+        /// </summary>
+        /// <remarks>
+        /// Busca uma única consulta veterinária pelo seu ID. Retorna 404 se não existir.
+        /// </remarks>
+        /// <param name="id">Identificador da consulta.</param>
+        /// <returns>Dados da consulta encontrada.</returns>
+        /// <response code="200">Consulta encontrada.</response>
+        /// <response code="404">Consulta não encontrada.</response>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -51,6 +61,17 @@ namespace ProntPet.Controllers
             return Ok(consultation);
         }
 
+        /// <summary>
+        /// Registra uma nova consulta veterinária.
+        /// </summary>
+        /// <remarks>
+        /// Cria uma consulta vinculada a um prontuário e a uma clínica.
+        /// Retorna 404 se o prontuário ou a clínica não existirem.
+        /// </remarks>
+        /// <param name="consultationRequest">Dados da consulta a ser criada.</param>
+        /// <returns>Consulta criada com o identificador gerado.</returns>
+        /// <response code="201">Consulta registrada com sucesso.</response>
+        /// <response code="404">Prontuário ou clínica informados não encontrados.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ConsultationRequest consultationRequest)
         {

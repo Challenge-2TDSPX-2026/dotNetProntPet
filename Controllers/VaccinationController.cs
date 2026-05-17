@@ -40,6 +40,16 @@ namespace ProntPet.Controllers
             return Ok(vaccinations);
         }
 
+        /// <summary>
+        /// Obtém uma vacinação pelo identificador.
+        /// </summary>
+        /// <remarks>
+        /// Busca um único registro de vacinação pelo seu ID. Retorna 404 se não existir.
+        /// </remarks>
+        /// <param name="id">Identificador da vacinação.</param>
+        /// <returns>Dados da vacinação encontrada.</returns>
+        /// <response code="200">Vacinação encontrada.</response>
+        /// <response code="404">Vacinação não encontrada.</response>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -57,7 +67,7 @@ namespace ProntPet.Controllers
         /// </remarks>
         /// <param name="request">Dados da vacinação a ser registrada.</param>
         /// <returns>Vacinação criada com o identificador gerado.</returns>
-        /// <response code="200">Vacinação registrada com sucesso.</response>
+        /// <response code="201">Vacinação registrada com sucesso.</response>
         /// <response code="404">Pet informado não encontrado.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] VaccinationRequest request)

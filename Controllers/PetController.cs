@@ -41,6 +41,16 @@ namespace ProntPet.Controllers
             
         }
 
+        /// <summary>
+        /// Obtém um pet pelo identificador.
+        /// </summary>
+        /// <remarks>
+        /// Busca um único pet pelo seu ID. Retorna 404 se não existir.
+        /// </remarks>
+        /// <param name="id">Identificador do pet.</param>
+        /// <returns>Dados do pet encontrado.</returns>
+        /// <response code="200">Pet encontrado.</response>
+        /// <response code="404">Pet não encontrado.</response>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -58,7 +68,7 @@ namespace ProntPet.Controllers
         /// </remarks>
         /// <param name="petRequest">Dados do pet a ser criado.</param>
         /// <returns>Pet criado com o identificador gerado.</returns>
-        /// <response code="200">Pet criado com sucesso.</response>
+        /// <response code="201">Pet criado com sucesso.</response>
         /// <response code="404">Tutor informado não encontrado.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] PetRequest petRequest)

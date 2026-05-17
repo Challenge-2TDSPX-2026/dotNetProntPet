@@ -39,6 +39,16 @@ namespace ProntPet.Controllers
             return Ok(records);
         }
 
+        /// <summary>
+        /// Obtém um prontuário médico pelo identificador.
+        /// </summary>
+        /// <remarks>
+        /// Busca um único prontuário pelo seu ID. Retorna 404 se não existir.
+        /// </remarks>
+        /// <param name="id">Identificador do prontuário.</param>
+        /// <returns>Dados do prontuário encontrado.</returns>
+        /// <response code="200">Prontuário encontrado.</response>
+        /// <response code="404">Prontuário não encontrado.</response>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
