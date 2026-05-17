@@ -2,10 +2,13 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 namespace ProntPet.Models;
 
 [Table("DB_MEDICAL_RECORD")]
+[Index(nameof(IdPet), IsUnique = true)]
+[Index(nameof(MicrochipCode), IsUnique = true)]
 public class MedicalRecord
 {
 

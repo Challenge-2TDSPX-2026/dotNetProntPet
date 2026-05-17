@@ -1,9 +1,12 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace ProntPet.Models;
 
+[Table("DB_CLINIC")]
+[Index(nameof(Cnpj), IsUnique = true)]
 public class Clinic
 {
 

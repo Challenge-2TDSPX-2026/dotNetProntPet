@@ -1,10 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 namespace ProntPet.Models
 {
     [Table("DB_TUTOR")]
+    [Index(nameof(Cpf), IsUnique = true)]
+    [Index(nameof(Phone), IsUnique = true)]
+    [Index(nameof(Email), IsUnique = true)]
     public class Tutor
     {
         [Key]
