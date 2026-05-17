@@ -80,6 +80,10 @@ namespace ProntPet.Controllers
             }
 
             var record = recordRequest.ToEntity();
+            
+            // data da última atualização é setado no momento da criação
+            record.LastUpdate = DateTime.UtcNow;
+
             _context.MedicalRecords.Add(record);
             await _context.SaveChangesAsync();
 
@@ -94,15 +98,15 @@ namespace ProntPet.Controllers
         /// Atualiza tipo sanguíneo, alergias, doenças crônicas, castração, microchip e data da última atualização.
         /// </remarks>
         /// <param name="id">Identificador do prontuário.</param>
-        /// <param name="updatedRecordRequest">Novos dados do prontuário.</param>
+        /// <param name="updatedRecord">Novos dados do prontuário.</param>
         /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
         /// <response code="204">Prontuário atualizado com sucesso.</response>
         /// <response code="404">Prontuário não encontrado.</response>
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] MedicalRecordRequest updatedRecordRequest)
+        public async Task<IActionResult> Update(int id, [FromBody] MedicalRecordRequest updatedRecord)
         {
 
-            var updatedRecord = updatedRecordRequest.ToEntity(); 
+            //var updatedRecord = updatedRecordRequest.ToEntity(); 
 
             var record = await _context.MedicalRecords.FindAsync(id);
 
@@ -110,7 +114,7 @@ namespace ProntPet.Controllers
 
             record.Update(updatedRecord.BloodType, updatedRecord.Allergies, 
                             updatedRecord.ChronicDiseases, updatedRecord.IsCastrated, 
-                            updatedRecord.MicrochipCode, updatedRecord.LastUpdate);
+                            updatedRecord.MicrochipCode, DateTime.UtcNow);
 
             await _context.SaveChangesAsync();
             return NoContent();

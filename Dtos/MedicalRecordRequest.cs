@@ -1,16 +1,20 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography.X509Certificates;
 using ProntPet.Models;
 
 namespace ProntPet.Dtos;
 
 public record class MedicalRecordRequest(
-    int IdPet,
+    [Required] int IdPet,
+    
+    [Required]
+    [MaxLength(5, ErrorMessage = "O tipo sanguíneo do pet não pode exceder 5 caracteres")] 
     string BloodType,
-    string? Allergies,
-    string? ChronicDiseases,
+    
+    [MaxLength(500)] string? Allergies,
+    [MaxLength(500)] string? ChronicDiseases,
     bool IsCastrated,
-    string? MicrochipCode,
-    DateOnly LastUpdate
+    [MaxLength(50)] string? MicrochipCode
 )
 {
 
@@ -24,7 +28,6 @@ public record class MedicalRecordRequest(
             ChronicDiseases = this.ChronicDiseases,
             IsCastrated = this.IsCastrated,
             MicrochipCode = this.MicrochipCode,
-            LastUpdate = this.LastUpdate.ToDateTime(TimeOnly.MinValue)
         };
         
     }

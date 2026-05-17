@@ -49,7 +49,8 @@ public class MedicalRecord
     [Column("LAST_UPDATE")]
     public DateTime LastUpdate { get; set; }
 
-    public void Update(string bloodType, string? allergies, string? chronicDiseases, bool isCastrated, string? microchipCode, DateTime lastUpdate )
+    public void Update(string bloodType, string? allergies, string? chronicDiseases, 
+                        bool isCastrated, string? microchipCode, DateTime lastUpdate)
     {
         this.BloodType = bloodType;
         this.Allergies = allergies;
