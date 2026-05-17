@@ -54,7 +54,7 @@ namespace ProntPet.Migrations
                     b.HasIndex("Cnpj")
                         .IsUnique();
 
-                    b.ToTable("DB_CLINIC");
+                    b.ToTable("DB_CLINIC", (string)null);
                 });
 
             modelBuilder.Entity("ProntPet.Models.Consultation", b =>
@@ -99,7 +99,7 @@ namespace ProntPet.Migrations
 
                     b.HasIndex("IdMedicalRecord");
 
-                    b.ToTable("Consultations");
+                    b.ToTable("Consultations", (string)null);
                 });
 
             modelBuilder.Entity("ProntPet.Models.MedicalRecord", b =>
@@ -154,7 +154,7 @@ namespace ProntPet.Migrations
                         .IsUnique()
                         .HasFilter("\"MICROCHIP_CODE\" IS NOT NULL");
 
-                    b.ToTable("DB_MEDICAL_RECORD");
+                    b.ToTable("DB_MEDICAL_RECORD", (string)null);
                 });
 
             modelBuilder.Entity("ProntPet.Models.Pet", b =>
@@ -204,7 +204,7 @@ namespace ProntPet.Migrations
 
                     b.HasIndex("IdTutor");
 
-                    b.ToTable("DB_PET");
+                    b.ToTable("DB_PET", (string)null);
                 });
 
             modelBuilder.Entity("ProntPet.Models.Tutor", b =>
@@ -263,7 +263,7 @@ namespace ProntPet.Migrations
                     b.HasIndex("Phone")
                         .IsUnique();
 
-                    b.ToTable("DB_TUTOR");
+                    b.ToTable("DB_TUTOR", (string)null);
                 });
 
             modelBuilder.Entity("ProntPet.Models.Vaccination", b =>
@@ -305,7 +305,7 @@ namespace ProntPet.Migrations
 
                     b.HasIndex("IdPet");
 
-                    b.ToTable("DB_VACCINATION");
+                    b.ToTable("DB_VACCINATION", (string)null);
                 });
 
             modelBuilder.Entity("ProntPet.Models.Consultation", b =>

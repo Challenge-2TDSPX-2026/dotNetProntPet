@@ -42,38 +42,15 @@ namespace ProntPet.Controllers
 
             
         }
-/*
-        /// <summary>
-        /// Lista as consultas realizadas em uma clínica.
-        /// </summary>
-        /// <remarks>
-        /// Retorna todas as consultas associadas à clínica identificada por <paramref name="idClinic"/>.
-        /// </remarks>
-        /// <param name="idClinic">Identificador da clínica.</param>
-        /// <returns>Lista de consultas da clínica.</returns>
-        /// <response code="200">Consultas retornadas com sucesso (pode ser lista vazia).</response>
-        [HttpGet("clinic/{idClinic}")]
-        public async Task<IActionResult> GetConsultationsByClinic(int idClinic)
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var consultations = await _context
-                .Consultations
-                .Where(c => c.IdClinic == idClinic)
-                .ToListAsync();
+            var consultation = await _context.Consultations.FindAsync(id);
+            if (consultation == null) return NotFound($"Consulta de id {id} não encontrada!");
+            return Ok(consultation);
+        }
 
-            return Ok(consultations);
-        }*/
-
-        /// <summary>
-        /// Registra uma nova consulta veterinária.
-        /// </summary>
-        /// <remarks>
-        /// Cria uma consulta vinculada a um prontuário e a uma clínica.
-        /// Retorna 404 se o prontuário ou a clínica não existirem.
-        /// </remarks>
-        /// <param name="consultationRequest">Dados da consulta a ser criada.</param>
-        /// <returns>Consulta criada com o identificador gerado.</returns>
-        /// <response code="200">Consulta registrada com sucesso.</response>
-        /// <response code="404">Prontuário ou clínica informados não encontrados.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ConsultationRequest consultationRequest)
         {
@@ -98,7 +75,7 @@ namespace ProntPet.Controllers
 
             _context.Consultations.Add(consultation);
             await _context.SaveChangesAsync();
-            return Ok(consultation);
+            return CreatedAtAction(nameof(GetById), new {id = consultation.Id}, consultation);
         }
 
         /// <summary>

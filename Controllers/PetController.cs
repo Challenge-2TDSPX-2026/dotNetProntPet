@@ -41,6 +41,14 @@ namespace ProntPet.Controllers
             
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var pet = await _context.Pets.FindAsync(id);
+            if (pet == null) return NotFound($"Pet de id {id} não encontrado!");
+            return Ok(pet);
+        }
+
         /// <summary>
         /// Cadastra um novo pet.
         /// </summary>
@@ -67,7 +75,7 @@ namespace ProntPet.Controllers
             _context.Pets.Add(pet);
             await _context.SaveChangesAsync();
 
-            return Ok(pet);
+            return CreatedAtAction(nameof(GetById), new {id = pet.Id}, pet);
         }
 
         /// <summary>

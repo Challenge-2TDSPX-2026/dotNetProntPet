@@ -39,6 +39,14 @@ namespace ProntPet.Controllers
             return Ok(records);
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var record = await _context.MedicalRecords.FindAsync(id);
+            if (record == null) return NotFound($"Prontuário de id {id} não encontrado!");
+            return Ok(record);
+        }
+
         /// <summary>
         /// Cadastra um novo prontuário médico.
         /// </summary>
@@ -48,7 +56,7 @@ namespace ProntPet.Controllers
         /// </remarks>
         /// <param name="recordRequest">Dados do prontuário a ser criado.</param>
         /// <returns>Prontuário criado com o identificador gerado.</returns>
-        /// <response code="200">Prontuário criado com sucesso.</response>
+        /// <response code="201">Prontuário criado com sucesso.</response>
         /// <response code="404">Pet informado não encontrado.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] MedicalRecordRequest recordRequest)
@@ -65,7 +73,7 @@ namespace ProntPet.Controllers
             _context.MedicalRecords.Add(record);
             await _context.SaveChangesAsync();
 
-            return Ok(record);
+            return CreatedAtAction(nameof(GetById), new { id = record.Id}, record);
 
         }
 

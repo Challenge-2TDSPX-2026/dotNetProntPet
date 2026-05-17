@@ -40,6 +40,14 @@ namespace ProntPet.Controllers
             return Ok(vaccinations);
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var vaccination = await _context.Vaccinations.FindAsync(id);
+            if (vaccination == null) return NotFound($"Vacinação de id {id} não encontrada!");
+            return Ok(vaccination);
+        }
+
         /// <summary>
         /// Registra uma nova vacinação.
         /// </summary>
@@ -66,7 +74,7 @@ namespace ProntPet.Controllers
             _context.Vaccinations.Add(vaccination);
             await _context.SaveChangesAsync();
 
-            return Ok(vaccination);
+            return CreatedAtAction(nameof(GetById), new {id = vaccination.Id}, vaccination);
 
         }
 

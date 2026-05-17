@@ -50,7 +50,7 @@ namespace ProntPet.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var clinic = await _context.Clinics.FindAsync(id);
-            if (clinic == null) return NotFound();
+            if (clinic == null) return NotFound($"Clínica de id {id} não encontrada!");
             return Ok(clinic);
         }
 

@@ -8,7 +8,7 @@ public record class MedicalRecordRequest(
     string BloodType,
     string? Allergies,
     string? ChronicDiseases,
-    bool? IsCastrated,
+    bool IsCastrated,
     string? MicrochipCode,
     DateOnly LastUpdate
 )
