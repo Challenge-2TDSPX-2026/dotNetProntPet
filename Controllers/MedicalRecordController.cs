@@ -30,7 +30,7 @@ namespace ProntPet.Controllers
         /// <param name="idPet">Identificador do pet.</param>
         /// <returns>Prontuário do pet.</returns>
         /// <response code="200">Prontuário retornado com sucesso (pode ser lista vazia).</response>
-        [HttpGet]
+        [HttpGet("pet/{idPet}")]
         public async Task<IActionResult> GetMedicalRecordsByPet(int idPet)
         {
             var records = await _context

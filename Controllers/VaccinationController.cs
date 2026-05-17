@@ -31,7 +31,7 @@ namespace ProntPet.Controllers
         /// <param name="idPet">Identificador do pet.</param>
         /// <returns>Lista de vacinações do pet.</returns>
         /// <response code="200">Vacinações retornadas com sucesso (pode ser lista vazia).</response>
-        [HttpGet]
+        [HttpGet("pet/{idPet}")]
         public async Task<IActionResult> GetVaccinationsByPet(int idPet)
         {
             var vaccinations = await _context

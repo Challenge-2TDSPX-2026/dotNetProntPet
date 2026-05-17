@@ -31,7 +31,7 @@ namespace ProntPet.Controllers
         /// <param name="idTutor">Identificador do tutor.</param>
         /// <returns>Lista de pets do tutor.</returns>
         /// <response code="200">Pets retornados com sucesso (pode ser lista vazia).</response>
-        [HttpGet]
+        [HttpGet("tutor/{idTutor}")]
         public async Task<IActionResult> GetPetsByTutor(int idTutor)
         {
             var pets = await _context
