@@ -7,6 +7,9 @@ using ProntPet.Models;
 
 namespace ProntPet.Controllers
 {
+    /// <summary>
+    /// Gerencia o cadastro e as operações de pets vinculados a tutores.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class PetController : ControllerBase
@@ -19,6 +22,15 @@ namespace ProntPet.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Lista os pets de um tutor.
+        /// </summary>
+        /// <remarks>
+        /// Filtra os pets pelo identificador do tutor informado na query string.
+        /// </remarks>
+        /// <param name="idTutor">Identificador do tutor.</param>
+        /// <returns>Lista de pets do tutor.</returns>
+        /// <response code="200">Pets retornados com sucesso (pode ser lista vazia).</response>
         [HttpGet]
         public async Task<IActionResult> GetPetsByTutor(int idTutor)
         {
@@ -29,10 +41,20 @@ namespace ProntPet.Controllers
             
         }
 
+        /// <summary>
+        /// Cadastra um novo pet.
+        /// </summary>
+        /// <remarks>
+        /// Cria um pet vinculado ao tutor informado em <c>IdTutor</c>.
+        /// Retorna 404 se o tutor não existir.
+        /// </remarks>
+        /// <param name="petRequest">Dados do pet a ser criado.</param>
+        /// <returns>Pet criado com o identificador gerado.</returns>
+        /// <response code="200">Pet criado com sucesso.</response>
+        /// <response code="404">Tutor informado não encontrado.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] PetRequest petRequest)
         {
-            // AnyAsync() retorna true se encontrar pelo menos 1 registro e false se não encontrar
             var tutorExists = await _context
                 .Tutors.AnyAsync(t => t.Id == petRequest.IdTutor);
 
@@ -48,6 +70,17 @@ namespace ProntPet.Controllers
             return Ok(pet);
         }
 
+        /// <summary>
+        /// Atualiza os dados de um pet existente.
+        /// </summary>
+        /// <remarks>
+        /// Atualiza nome, espécie, raça, data de nascimento, peso e sexo do pet identificado por <paramref name="id"/>.
+        /// </remarks>
+        /// <param name="id">Identificador do pet.</param>
+        /// <param name="request">Novos dados do pet.</param>
+        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
+        /// <response code="204">Pet atualizado com sucesso.</response>
+        /// <response code="404">Pet não encontrado.</response>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] PetUpdateRequest request)
         {
@@ -65,6 +98,16 @@ namespace ProntPet.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Remove um pet do sistema.
+        /// </summary>
+        /// <remarks>
+        /// Exclui permanentemente o pet identificado por <paramref name="id"/>.
+        /// </remarks>
+        /// <param name="id">Identificador do pet.</param>
+        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
+        /// <response code="204">Pet removido com sucesso.</response>
+        /// <response code="404">Pet não encontrado.</response>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

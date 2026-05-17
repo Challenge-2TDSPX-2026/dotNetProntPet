@@ -7,6 +7,9 @@ using ProntPet.Models;
 
 namespace ProntPet.Controllers
 {
+    /// <summary>
+    /// Gerencia o registro de vacinações vinculadas a pets.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class VaccinationController : ControllerBase
@@ -19,6 +22,15 @@ namespace ProntPet.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Lista as vacinações de um pet.
+        /// </summary>
+        /// <remarks>
+        /// Filtra as vacinações pelo identificador do pet informado.
+        /// </remarks>
+        /// <param name="idPet">Identificador do pet.</param>
+        /// <returns>Lista de vacinações do pet.</returns>
+        /// <response code="200">Vacinações retornadas com sucesso (pode ser lista vazia).</response>
         [HttpGet]
         public async Task<IActionResult> GetVaccinationsByPet(int idPet)
         {
@@ -28,6 +40,17 @@ namespace ProntPet.Controllers
             return Ok(vaccinations);
         }
 
+        /// <summary>
+        /// Registra uma nova vacinação.
+        /// </summary>
+        /// <remarks>
+        /// Cria um registro de vacinação vinculado ao pet informado em <c>IdPet</c>.
+        /// Retorna 404 se o pet não existir.
+        /// </remarks>
+        /// <param name="request">Dados da vacinação a ser registrada.</param>
+        /// <returns>Vacinação criada com o identificador gerado.</returns>
+        /// <response code="200">Vacinação registrada com sucesso.</response>
+        /// <response code="404">Pet informado não encontrado.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] VaccinationRequest request)
         {
@@ -47,7 +70,17 @@ namespace ProntPet.Controllers
 
         }
 
-
+        /// <summary>
+        /// Atualiza os dados de uma vacinação existente.
+        /// </summary>
+        /// <remarks>
+        /// Atualiza nome da vacina, data de aplicação, validade e lote da vacinação identificada por <paramref name="id"/>.
+        /// </remarks>
+        /// <param name="id">Identificador da vacinação.</param>
+        /// <param name="updatedVaccination">Novos dados da vacinação.</param>
+        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
+        /// <response code="204">Vacinação atualizada com sucesso.</response>
+        /// <response code="404">Vacinação não encontrada.</response>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] VaccinationRequest updatedVaccination)
         {
@@ -62,7 +95,16 @@ namespace ProntPet.Controllers
             return NoContent();
         }
 
-
+        /// <summary>
+        /// Remove um registro de vacinação do sistema.
+        /// </summary>
+        /// <remarks>
+        /// Exclui permanentemente a vacinação identificada por <paramref name="id"/>.
+        /// </remarks>
+        /// <param name="id">Identificador da vacinação.</param>
+        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
+        /// <response code="204">Vacinação removida com sucesso.</response>
+        /// <response code="404">Vacinação não encontrada.</response>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

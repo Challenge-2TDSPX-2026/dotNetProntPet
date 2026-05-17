@@ -6,6 +6,9 @@ using ProntPet.Models;
 
 namespace ProntPet.Controllers
 {
+    /// <summary>
+    /// Gerencia consultas veterinárias vinculadas a prontuários e clínicas.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class ConsultationController : ControllerBase
@@ -18,6 +21,15 @@ namespace ProntPet.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Lista as consultas de um prontuário médico.
+        /// </summary>
+        /// <remarks>
+        /// Retorna todas as consultas associadas ao prontuário identificado por <paramref name="idRecord"/>.
+        /// </remarks>
+        /// <param name="idRecord">Identificador do prontuário médico.</param>
+        /// <returns>Lista de consultas do prontuário.</returns>
+        /// <response code="200">Consultas retornadas com sucesso (pode ser lista vazia).</response>
         [HttpGet("medical-record/{idRecord}")]
         public async Task<IActionResult> GetConsultationsByMedicalRecord(int idRecord)
         {
@@ -30,7 +42,16 @@ namespace ProntPet.Controllers
 
             
         }
-
+/*
+        /// <summary>
+        /// Lista as consultas realizadas em uma clínica.
+        /// </summary>
+        /// <remarks>
+        /// Retorna todas as consultas associadas à clínica identificada por <paramref name="idClinic"/>.
+        /// </remarks>
+        /// <param name="idClinic">Identificador da clínica.</param>
+        /// <returns>Lista de consultas da clínica.</returns>
+        /// <response code="200">Consultas retornadas com sucesso (pode ser lista vazia).</response>
         [HttpGet("clinic/{idClinic}")]
         public async Task<IActionResult> GetConsultationsByClinic(int idClinic)
         {
@@ -40,14 +61,23 @@ namespace ProntPet.Controllers
                 .ToListAsync();
 
             return Ok(consultations);
-        }
+        }*/
 
+        /// <summary>
+        /// Registra uma nova consulta veterinária.
+        /// </summary>
+        /// <remarks>
+        /// Cria uma consulta vinculada a um prontuário e a uma clínica.
+        /// Retorna 404 se o prontuário ou a clínica não existirem.
+        /// </remarks>
+        /// <param name="consultationRequest">Dados da consulta a ser criada.</param>
+        /// <returns>Consulta criada com o identificador gerado.</returns>
+        /// <response code="200">Consulta registrada com sucesso.</response>
+        /// <response code="404">Prontuário ou clínica informados não encontrados.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ConsultationRequest consultationRequest)
         {
-            // Converte para entidade
             var consultation = consultationRequest.ToEntity();
-            // verifica se o prontuário existe
             var recordExists = await _context
                 .MedicalRecords
                 .AnyAsync(mc => mc.Id == consultation.IdMedicalRecord);
@@ -57,7 +87,6 @@ namespace ProntPet.Controllers
                 return NotFound($"O protuário de id {consultation.IdMedicalRecord} não foi encontrado!");
             }
 
-            // Verifica se a clínica existe
             var clinicExists = await _context
                 .Clinics
                 .AnyAsync(c => c.Id == consultation.IdClinic);
@@ -67,14 +96,22 @@ namespace ProntPet.Controllers
                 return NotFound($"A clínica de id {consultation.IdClinic} não foi encontrada!");
             }
 
-            // add
             _context.Consultations.Add(consultation);
-            // savechanges
             await _context.SaveChangesAsync();
-            // return ok
             return Ok(consultation);
         }
 
+        /// <summary>
+        /// Atualiza os dados de uma consulta existente.
+        /// </summary>
+        /// <remarks>
+        /// Atualiza data, sintomas, diagnóstico e observações da consulta identificada por <paramref name="id"/>.
+        /// </remarks>
+        /// <param name="id">Identificador da consulta.</param>
+        /// <param name="request">Novos dados da consulta.</param>
+        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
+        /// <response code="204">Consulta atualizada com sucesso.</response>
+        /// <response code="404">Consulta não encontrada.</response>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ConsultationRequest request)
         {
@@ -88,6 +125,16 @@ namespace ProntPet.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Remove uma consulta do sistema.
+        /// </summary>
+        /// <remarks>
+        /// Exclui permanentemente a consulta identificada por <paramref name="id"/>.
+        /// </remarks>
+        /// <param name="id">Identificador da consulta.</param>
+        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
+        /// <response code="204">Consulta removida com sucesso.</response>
+        /// <response code="404">Consulta não encontrada.</response>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

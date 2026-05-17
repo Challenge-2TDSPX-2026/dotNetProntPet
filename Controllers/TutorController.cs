@@ -7,6 +7,9 @@ using ProntPet.Dtos;
 
 namespace ProntPet.Controllers
 {
+    /// <summary>
+    /// Gerencia o cadastro e as operações de tutores (donos de pets).
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class TutorController : ControllerBase
@@ -19,12 +22,14 @@ namespace ProntPet.Controllers
             _context = context;
         }
 
-        // async indica que o método suporta await
-        /* 
-            'await' Busca os tutores no banco. Enquanto o banco responde, não 
-            bloqueie a thread da API. Quando terminar, continue daqui com os dados 
-            carregados.
-        */
+        /// <summary>
+        /// Lista todos os tutores cadastrados.
+        /// </summary>
+        /// <remarks>
+        /// Retorna os tutores convertidos para <see cref="TutorResponse"/>, sem expor a senha.
+        /// </remarks>
+        /// <returns>Lista de tutores.</returns>
+        /// <response code="200">Tutores retornados com sucesso.</response>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -35,6 +40,16 @@ namespace ProntPet.Controllers
             return Ok(response);
         }
 
+        /// <summary>
+        /// Obtém um tutor pelo identificador.
+        /// </summary>
+        /// <remarks>
+        /// Busca um único tutor pelo ID e retorna os dados públicos (sem senha).
+        /// </remarks>
+        /// <param name="id">Identificador do tutor.</param>
+        /// <returns>Dados do tutor encontrado.</returns>
+        /// <response code="200">Tutor encontrado.</response>
+        /// <response code="404">Tutor não encontrado.</response>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -43,6 +58,16 @@ namespace ProntPet.Controllers
             return Ok(TutorResponse.FromEntity(tutor));
         }
 
+        /// <summary>
+        /// Cadastra um novo tutor.
+        /// </summary>
+        /// <remarks>
+        /// Cria um registro de tutor com os dados informados no corpo da requisição.
+        /// </remarks>
+        /// <param name="tutorRequest">Dados do tutor a ser criado.</param>
+        /// <returns>Tutor criado com o identificador gerado.</returns>
+        /// <response code="201">Tutor criado com sucesso.</response>
+        /// <response code="400">Dados inválidos na requisição.</response>
         [HttpPost]
         public async Task<IActionResult> Create(TutorRequest tutorRequest)
         {
@@ -52,7 +77,17 @@ namespace ProntPet.Controllers
             return CreatedAtAction(nameof(GetById), new { id = tutor.Id }, tutor);
         }
 
-
+        /// <summary>
+        /// Atualiza os dados de um tutor existente.
+        /// </summary>
+        /// <remarks>
+        /// Atualiza nome, CPF, telefone, e-mail, senha e endereço do tutor identificado por <paramref name="id"/>.
+        /// </remarks>
+        /// <param name="id">Identificador do tutor.</param>
+        /// <param name="updatedTutor">Novos dados do tutor.</param>
+        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
+        /// <response code="204">Tutor atualizado com sucesso.</response>
+        /// <response code="404">Tutor não encontrado.</response>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] TutorRequest updatedTutor)
         {
@@ -65,6 +100,16 @@ namespace ProntPet.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Remove um tutor do sistema.
+        /// </summary>
+        /// <remarks>
+        /// Exclui permanentemente o tutor identificado por <paramref name="id"/>.
+        /// </remarks>
+        /// <param name="id">Identificador do tutor.</param>
+        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
+        /// <response code="204">Tutor removido com sucesso.</response>
+        /// <response code="404">Tutor não encontrado.</response>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -74,7 +119,6 @@ namespace ProntPet.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-
 
     }
 }
