@@ -69,6 +69,7 @@ namespace ProntPet.Controllers
         /// <returns>Vacinação criada com o identificador gerado.</returns>
         /// <response code="201">Vacinação registrada com sucesso.</response>
         /// <response code="404">Pet informado não encontrado.</response>
+        /// <response code="400">Data de expiração inferior ou igual a da aplicação</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] VaccinationRequest request)
         {

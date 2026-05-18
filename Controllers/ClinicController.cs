@@ -63,7 +63,6 @@ namespace ProntPet.Controllers
         /// <param name="clinicRequest">Dados da clínica a ser criada.</param>
         /// <returns>Clínica criada com o identificador gerado.</returns>
         /// <response code="201">Clínica criada com sucesso.</response>
-        /// <response code="400">Dados inválidos na requisição.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ClinicRequest clinicRequest)
         {

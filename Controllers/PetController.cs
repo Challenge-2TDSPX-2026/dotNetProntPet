@@ -70,6 +70,7 @@ namespace ProntPet.Controllers
         /// <returns>Pet criado com o identificador gerado.</returns>
         /// <response code="201">Pet criado com sucesso.</response>
         /// <response code="404">Tutor informado não encontrado.</response>
+        /// <response code="400">Peso do pet menor que 0.</response>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] PetRequest petRequest)
         {
