@@ -18,8 +18,8 @@ public record class VaccinationRequest(
         {
             IdPet = this.IdPet,
             VaccineName = this.VaccineName,
-            ApplicationDate = this.ApplicationDate,
-            ExpirationDate = this.ExpirationDate,
+            ApplicationDate = this.ApplicationDate.ToDateTime(TimeOnly.MinValue),
+            ExpirationDate = this.ExpirationDate.ToDateTime(TimeOnly.MinValue),
             Lot = this.Lot
         };
     }

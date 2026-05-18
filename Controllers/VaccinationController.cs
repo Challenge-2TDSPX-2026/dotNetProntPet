@@ -80,6 +80,11 @@ namespace ProntPet.Controllers
                 return NotFound($"O pet de id {request.IdPet} não foi encontrado!");
             }
 
+            if (request.ExpirationDate <= request.ApplicationDate )
+            {
+                return BadRequest("A data de expiração da vacina não pode ser anterior ou igual a data de aplicação");
+            }
+
             var vaccination = request.ToEntity();
             _context.Vaccinations.Add(vaccination);
             await _context.SaveChangesAsync();
@@ -95,16 +100,18 @@ namespace ProntPet.Controllers
         /// Atualiza nome da vacina, data de aplicação, validade e lote da vacinação identificada por <paramref name="id"/>.
         /// </remarks>
         /// <param name="id">Identificador da vacinação.</param>
-        /// <param name="updatedVaccination">Novos dados da vacinação.</param>
+        /// <param name="request">Novos dados da vacinação.</param>
         /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
         /// <response code="204">Vacinação atualizada com sucesso.</response>
         /// <response code="404">Vacinação não encontrada.</response>
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] VaccinationRequest updatedVaccination)
+        public async Task<IActionResult> Update(int id, [FromBody] VaccinationRequest request)
         {
             var vaccination = await _context.Vaccinations.FindAsync(id);
 
             if (vaccination == null) return NotFound($"Vacinação de id {id} não encontrada!");
+
+            var updatedVaccination = request.ToEntity();
 
             vaccination.Update(updatedVaccination.VaccineName, updatedVaccination.ApplicationDate, 
                                 updatedVaccination.ExpirationDate, updatedVaccination.Lot);

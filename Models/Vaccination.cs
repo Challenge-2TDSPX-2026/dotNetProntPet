@@ -28,19 +28,19 @@ public class Vaccination
 
     [Required]
     [Column("APPLICATION_DATE")]
-    public DateOnly ApplicationDate {get; set; }
+    public DateTime ApplicationDate {get; set; }
 
     [Required]
     [Column("EXPIRATION_DATE")]
-    public DateOnly ExpirationDate {get; set; }
+    public DateTime ExpirationDate {get; set; }
 
     [MaxLength(10)]
     [Required]
     [Column("LOT")]
     public string Lot {get; set; }
 
-    public void Update(string vaccineName, DateOnly applicationDate, 
-                        DateOnly expirationDate, string lot)
+    public void Update(string vaccineName, DateTime applicationDate, 
+                        DateTime expirationDate, string lot)
     {
         this.VaccineName = vaccineName;
         this.ApplicationDate = applicationDate;
