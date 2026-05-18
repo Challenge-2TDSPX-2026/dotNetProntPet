@@ -81,6 +81,11 @@ namespace ProntPet.Controllers
                 return NotFound($"O tutor de Id {petRequest.IdTutor} não foi encontrado.");
             }
 
+            if (petRequest.Weight != null & petRequest.Weight < 0)
+            {
+                return BadRequest("O peso do pet não pode ser menor que 0");
+            }
+
             var pet = petRequest.ToEntity();
             _context.Pets.Add(pet);
             await _context.SaveChangesAsync();
