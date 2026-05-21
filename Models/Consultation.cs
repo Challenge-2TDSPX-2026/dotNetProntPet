@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace ProntPet.Models;
 
+[Table("DB_CONSULTATION")]
 public class Consultation
 {
 
