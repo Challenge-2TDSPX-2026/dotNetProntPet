@@ -100,6 +100,8 @@ dotnet restore
 Update-Package -Reinstall
 ```
 
+> Para abrir o PMC no Visual Studio: `Tools` → `NuGet Package Manager` → `Package Manager Console`
+
 ### 4. Execute as migrations
 
 Aplique as migrations para criar as tabelas no banco de dados:
@@ -113,8 +115,6 @@ dotnet ef database update
 ```powershell
 Update-Database
 ```
- 
-> Para abrir o PMC no Visual Studio: `Tools` → `NuGet Package Manager` → `Package Manager Console`
 
 ### 5. Execute a aplicação
 
