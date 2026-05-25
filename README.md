@@ -11,6 +11,7 @@ API RESTful para gerenciamento de prontuários veterinários, desenvolvida em **
 | Anthony De Souza Henriques | RM566188 |
 | Guilherme Santos Fonseca | RM564232 |
 | Gustavo Araújo Da Silva | RM566526 |
+| Nathan Gonçalves Pereira Mendes | RM564666 |
 
 ---
 
