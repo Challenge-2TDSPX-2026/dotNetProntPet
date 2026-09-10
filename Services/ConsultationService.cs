@@ -1,6 +1,9 @@
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using Microsoft.EntityFrameworkCore;
 using ProntPet.Common;
 using ProntPet.Data;
+using ProntPet.Diagnostics;
 using ProntPet.Models;
 
 namespace ProntPet.Services;
@@ -10,14 +13,23 @@ public class ConsultationService : IConsultationService
     private readonly AppDbContext _context;
     private readonly ILogger<ConsultationService> _logger;
 
-    public ConsultationService(AppDbContext context, ILogger<ConsultationService> logger)
+    private static readonly ActivitySource ActivitySource = new(TelemetryConstants.ServiceName);
+    private readonly Counter<int> _consultationsCreatedCounter;
+
+    public ConsultationService(AppDbContext context, ILogger<ConsultationService> logger, IMeterFactory meterFactory)
     {
         _context = context;
         _logger = logger;
+
+        var meter = meterFactory.Create(TelemetryConstants.MeterName);
+        _consultationsCreatedCounter = meter.CreateCounter<int>("consultations_created_total", description: "Total de consultas registradas");
     }
 
     public async Task<List<Consultation>> GetByMedicalRecordAsync(int idRecord)
     {
+        using var activity = ActivitySource.StartActivity("GetConsultationsByMedicalRecord");
+        activity?.SetTag("medical_record.id", idRecord);
+
         return await _context.Consultations
             .Where(c => c.IdMedicalRecord == idRecord)
             .ToListAsync();
@@ -25,11 +37,15 @@ public class ConsultationService : IConsultationService
 
     public async Task<ServiceResult<Consultation>> GetByIdAsync(int id)
     {
+        using var activity = ActivitySource.StartActivity("GetConsultationById");
+        activity?.SetTag("consultation.id", id);
+
         var consultation = await _context.Consultations.FindAsync(id);
 
         if (consultation == null)
         {
             _logger.LogWarning("Consulta de id {ConsultationId} não encontrada.", id);
+            activity?.SetStatus(ActivityStatusCode.Error, "Consulta não encontrada");
             return ServiceResult<Consultation>.NotFound($"Consulta de id {id} não encontrada!");
         }
 
@@ -38,7 +54,11 @@ public class ConsultationService : IConsultationService
 
     public async Task<ServiceResult<Consultation>> CreateAsync(ConsultationRequest request)
     {
+        using var activity = ActivitySource.StartActivity("CreateConsultation");
+
         var consultation = request.ToEntity();
+        activity?.SetTag("medical_record.id", consultation.IdMedicalRecord);
+        activity?.SetTag("clinic.id", consultation.IdClinic);
 
         var recordExists = await _context.MedicalRecords
             .AnyAsync(mc => mc.Id == consultation.IdMedicalRecord);
@@ -48,6 +68,7 @@ public class ConsultationService : IConsultationService
             _logger.LogWarning(
                 "Tentativa de registrar consulta para prontuário inexistente. MedicalRecordId: {MedicalRecordId}",
                 consultation.IdMedicalRecord);
+            activity?.SetStatus(ActivityStatusCode.Error, "Prontuário não encontrado");
             return ServiceResult<Consultation>.NotFound(
                 $"O protuário de id {consultation.IdMedicalRecord} não foi encontrado!");
         }
@@ -60,6 +81,7 @@ public class ConsultationService : IConsultationService
             _logger.LogWarning(
                 "Tentativa de registrar consulta para clínica inexistente. ClinicId: {ClinicId}",
                 consultation.IdClinic);
+            activity?.SetStatus(ActivityStatusCode.Error, "Clínica não encontrada");
             return ServiceResult<Consultation>.NotFound(
                 $"A clínica de id {consultation.IdClinic} não foi encontrada!");
         }
@@ -69,11 +91,17 @@ public class ConsultationService : IConsultationService
 
         _logger.LogInformation("Consulta criada com sucesso: {@Consultation}", consultation);
 
+        _consultationsCreatedCounter.Add(1);
+        activity?.SetTag("consultation.id", consultation.Id);
+
         return ServiceResult<Consultation>.Ok(consultation);
     }
 
     public async Task<ServiceResult<bool>> UpdateAsync(int id, ConsultationRequest request)
     {
+        using var activity = ActivitySource.StartActivity("UpdateConsultation");
+        activity?.SetTag("consultation.id", id);
+
         var updatedConsultation = request.ToEntity();
 
         var consultation = await _context.Consultations.FindAsync(id);
@@ -81,6 +109,7 @@ public class ConsultationService : IConsultationService
         if (consultation == null)
         {
             _logger.LogWarning("Tentativa de atualizar consulta inexistente. ConsultationId: {ConsultationId}", id);
+            activity?.SetStatus(ActivityStatusCode.Error, "Consulta não encontrada");
             return ServiceResult<bool>.NotFound($"Consulta de id {id} não encontrada!");
         }
 
@@ -96,11 +125,15 @@ public class ConsultationService : IConsultationService
 
     public async Task<ServiceResult<bool>> DeleteAsync(int id)
     {
+        using var activity = ActivitySource.StartActivity("DeleteConsultation");
+        activity?.SetTag("consultation.id", id);
+
         var consultation = await _context.Consultations.FindAsync(id);
 
         if (consultation == null)
         {
             _logger.LogWarning("Tentativa de remover consulta inexistente. ConsultationId: {ConsultationId}", id);
+            activity?.SetStatus(ActivityStatusCode.Error, "Consulta não encontrada");
             return ServiceResult<bool>.NotFound($"Consulta de id {id} não encontrada!");
         }
 

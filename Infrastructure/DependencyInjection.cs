@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using ProntPet.Data;
+using ProntPet.Diagnostics;
 
 namespace ProntPet.Infrastructure;
 
 /// <summary>
 /// Configuração centralizada da infraestrutura da aplicação:
-/// persistência (Oracle/EF Core) e Health Checks.
+/// persistência (Oracle/EF Core), Health Checks e Observabilidade (OpenTelemetry).
 /// </summary>
 public static class DependencyInjection
 {
@@ -27,6 +31,32 @@ public static class DependencyInjection
             .AddDbContextCheck<AppDbContext>(
                 name: "oracle-database",
                 tags: new[] { "ready" });
+
+        // 3. Configuração do OpenTelemetry (Tracing + Métricas)
+        var resourceBuilder = ResourceBuilder.CreateDefault()
+            .AddService(TelemetryConstants.ServiceName);
+
+        services.AddOpenTelemetry()
+            .WithTracing(tracerProviderBuilder =>
+            {
+                tracerProviderBuilder
+                    .SetResourceBuilder(resourceBuilder)
+                    .AddAspNetCoreInstrumentation() // Captura requisições HTTP de entrada (spans automáticos por endpoint)
+                    .AddHttpClientInstrumentation() // Captura chamadas HTTP de saída (ex: futuras integrações com serviços externos)
+                    .AddSource(TelemetryConstants.ServiceName) // Assina os spans customizados criados nos Services
+                    .AddConsoleExporter(); // Exporta para o console (debug local); trocar por AddOtlpExporter() para enviar a um coletor real
+            })
+            .WithMetrics(meterProviderBuilder =>
+            {
+                meterProviderBuilder
+                    .SetResourceBuilder(resourceBuilder)
+                    // Métricas padrão do ASP.NET Core: http.server.request.duration (tempo de resposta)
+                    // e contagem de requisições por status code (base para taxa de erros).
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddMeter(TelemetryConstants.MeterName) // Assina as métricas de negócio customizadas
+                    .AddConsoleExporter();
+            });
 
         return services;
     }
