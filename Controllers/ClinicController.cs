@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProntPet.Data;
-using ProntPet.Models;
+using ProntPet.Common;
+using ProntPet.Services;
 
 namespace ProntPet.Controllers
 {
@@ -13,12 +11,11 @@ namespace ProntPet.Controllers
     [ApiController]
     public class ClinicController : ControllerBase
     {
+        private readonly IClinicService _clinicService;
 
-        private readonly AppDbContext _context;
-
-        public ClinicController(AppDbContext context)
+        public ClinicController(IClinicService clinicService)
         {
-            _context = context;
+            _clinicService = clinicService;
         }
 
         /// <summary>
@@ -32,7 +29,7 @@ namespace ProntPet.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var clinics = await _context.Clinics.ToListAsync();
+            var clinics = await _clinicService.GetAllAsync();
             return Ok(clinics);
         }
 
@@ -49,9 +46,14 @@ namespace ProntPet.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var clinic = await _context.Clinics.FindAsync(id);
-            if (clinic == null) return NotFound($"Clínica de id {id} não encontrada!");
-            return Ok(clinic);
+            var result = await _clinicService.GetByIdAsync(id);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => Ok(result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -66,10 +68,14 @@ namespace ProntPet.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ClinicRequest clinicRequest)
         {
-            var clinic = clinicRequest.ToEntity();
-            _context.Clinics.Add(clinic);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = clinic.Id }, clinic);
+            var result = await _clinicService.CreateAsync(clinicRequest);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -86,12 +92,14 @@ namespace ProntPet.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ClinicRequest updatedClinicRequest)
         {
-            var updatedClinic = updatedClinicRequest.ToEntity();
-            var clinic = await _context.Clinics.FindAsync(id);
-            if (clinic == null) return NotFound();
-            clinic.Update(updatedClinic.Name, updatedClinic.Address);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            var result = await _clinicService.UpdateAsync(id, updatedClinicRequest);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -107,14 +115,15 @@ namespace ProntPet.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var clinic = await _context.Clinics.FindAsync(id);
-            if (clinic == null) return NotFound();
+            var result = await _clinicService.DeleteAsync(id);
 
-            _context.Clinics.Remove(clinic);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
-
 
     }
 }

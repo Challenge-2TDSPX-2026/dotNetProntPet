@@ -1,9 +1,7 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProntPet.Data;
+using ProntPet.Common;
 using ProntPet.Dtos;
-using ProntPet.Models;
+using ProntPet.Services;
 
 namespace ProntPet.Controllers
 {
@@ -14,11 +12,11 @@ namespace ProntPet.Controllers
     [ApiController]
     public class MedicalRecordController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IMedicalRecordService _medicalRecordService;
 
-        public MedicalRecordController(AppDbContext context)
+        public MedicalRecordController(IMedicalRecordService medicalRecordService)
         {
-            _context = context;
+            _medicalRecordService = medicalRecordService;
         }
 
         /// <summary>
@@ -33,9 +31,7 @@ namespace ProntPet.Controllers
         [HttpGet("pet/{idPet}")]
         public async Task<IActionResult> GetMedicalRecordsByPet(int idPet)
         {
-            var records = await _context
-                .MedicalRecords.Where(mc => mc.IdPet == idPet).ToListAsync();
-
+            var records = await _medicalRecordService.GetByPetAsync(idPet);
             return Ok(records);
         }
 
@@ -52,9 +48,14 @@ namespace ProntPet.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var record = await _context.MedicalRecords.FindAsync(id);
-            if (record == null) return NotFound($"Prontuário de id {id} não encontrado!");
-            return Ok(record);
+            var result = await _medicalRecordService.GetByIdAsync(id);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => Ok(result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -71,24 +72,14 @@ namespace ProntPet.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] MedicalRecordRequest recordRequest)
         {
-            var petExists = await _context
-                .Pets.AnyAsync(p => p.Id == recordRequest.IdPet);
+            var result = await _medicalRecordService.CreateAsync(recordRequest);
 
-            if (!petExists)
+            return result.Status switch
             {
-                return NotFound($"O pet de id {recordRequest.IdPet} não foi encontrado!");
-            }
-
-            var record = recordRequest.ToEntity();
-            
-            // data da última atualização é setado no momento da criação
-            record.LastUpdate = DateTime.UtcNow;
-
-            _context.MedicalRecords.Add(record);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = record.Id}, record);
-
+                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -105,19 +96,14 @@ namespace ProntPet.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] MedicalRecordRequest updatedRecord)
         {
+            var result = await _medicalRecordService.UpdateAsync(id, updatedRecord);
 
-            //var updatedRecord = updatedRecordRequest.ToEntity(); 
-
-            var record = await _context.MedicalRecords.FindAsync(id);
-
-            if (record == null) return NotFound($"O Protuário de id {id} não encontrado!");
-
-            record.Update(updatedRecord.BloodType, updatedRecord.Allergies, 
-                            updatedRecord.ChronicDiseases, updatedRecord.IsCastrated, 
-                            updatedRecord.MicrochipCode, DateTime.UtcNow);
-
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -133,13 +119,14 @@ namespace ProntPet.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var record = await _context.MedicalRecords.FindAsync(id);
+            var result = await _medicalRecordService.DeleteAsync(id);
 
-            if (record == null) return NotFound($"Protuário de id {id} não encontrado!");
-
-            _context.MedicalRecords.Remove(record);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
     }

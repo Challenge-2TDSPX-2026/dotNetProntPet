@@ -1,9 +1,7 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProntPet.Data;
+using ProntPet.Common;
 using ProntPet.Dtos;
-using ProntPet.Models;
+using ProntPet.Services;
 
 namespace ProntPet.Controllers
 {
@@ -14,12 +12,11 @@ namespace ProntPet.Controllers
     [ApiController]
     public class VaccinationController : ControllerBase
     {
-        
-        private readonly AppDbContext _context;
+        private readonly IVaccinationService _vaccinationService;
 
-        public VaccinationController(AppDbContext context)
+        public VaccinationController(IVaccinationService vaccinationService)
         {
-            _context = context;
+            _vaccinationService = vaccinationService;
         }
 
         /// <summary>
@@ -34,9 +31,7 @@ namespace ProntPet.Controllers
         [HttpGet("pet/{idPet}")]
         public async Task<IActionResult> GetVaccinationsByPet(int idPet)
         {
-            var vaccinations = await _context
-                .Vaccinations.Where(v => v.IdPet == idPet).ToListAsync();
-
+            var vaccinations = await _vaccinationService.GetByPetAsync(idPet);
             return Ok(vaccinations);
         }
 
@@ -53,9 +48,14 @@ namespace ProntPet.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var vaccination = await _context.Vaccinations.FindAsync(id);
-            if (vaccination == null) return NotFound($"Vacinação de id {id} não encontrada!");
-            return Ok(vaccination);
+            var result = await _vaccinationService.GetByIdAsync(id);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => Ok(result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -73,25 +73,14 @@ namespace ProntPet.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] VaccinationRequest request)
         {
-            var petExists = await _context
-                .Pets.AnyAsync(p => p.Id == request.IdPet);
+            var result = await _vaccinationService.CreateAsync(request);
 
-            if (!petExists)
+            return result.Status switch
             {
-                return NotFound($"O pet de id {request.IdPet} não foi encontrado!");
-            }
-
-            if (request.ExpirationDate <= request.ApplicationDate )
-            {
-                return BadRequest("A data de expiração da vacina não pode ser anterior ou igual a data de aplicação");
-            }
-
-            var vaccination = request.ToEntity();
-            _context.Vaccinations.Add(vaccination);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new {id = vaccination.Id}, vaccination);
-
+                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -108,17 +97,14 @@ namespace ProntPet.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] VaccinationRequest request)
         {
-            var vaccination = await _context.Vaccinations.FindAsync(id);
+            var result = await _vaccinationService.UpdateAsync(id, request);
 
-            if (vaccination == null) return NotFound($"Vacinação de id {id} não encontrada!");
-
-            var updatedVaccination = request.ToEntity();
-
-            vaccination.Update(updatedVaccination.VaccineName, updatedVaccination.ApplicationDate, 
-                                updatedVaccination.ExpirationDate, updatedVaccination.Lot);
-
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -134,13 +120,14 @@ namespace ProntPet.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var vaccination = await _context.Vaccinations.FindAsync(id);
+            var result = await _vaccinationService.DeleteAsync(id);
 
-            if (vaccination == null) return NotFound($"Vacinação de id {id} não encontrada!");
-
-            _context.Vaccinations.Remove(vaccination);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
     }

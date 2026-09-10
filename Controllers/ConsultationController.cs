@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProntPet.Data;
-using ProntPet.Models;
+using ProntPet.Common;
+using ProntPet.Services;
 
 namespace ProntPet.Controllers
 {
@@ -13,12 +11,11 @@ namespace ProntPet.Controllers
     [ApiController]
     public class ConsultationController : ControllerBase
     {
-        
-        private readonly AppDbContext _context;
+        private readonly IConsultationService _consultationService;
 
-        public ConsultationController(AppDbContext context)
+        public ConsultationController(IConsultationService consultationService)
         {
-            _context = context;
+            _consultationService = consultationService;
         }
 
         /// <summary>
@@ -33,14 +30,8 @@ namespace ProntPet.Controllers
         [HttpGet("medical-record/{idRecord}")]
         public async Task<IActionResult> GetConsultationsByMedicalRecord(int idRecord)
         {
-            var consultations = await _context
-                .Consultations
-                .Where(c => c.IdMedicalRecord == idRecord)
-                .ToListAsync();
-
+            var consultations = await _consultationService.GetByMedicalRecordAsync(idRecord);
             return Ok(consultations);
-
-            
         }
 
         /// <summary>
@@ -56,9 +47,14 @@ namespace ProntPet.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var consultation = await _context.Consultations.FindAsync(id);
-            if (consultation == null) return NotFound($"Consulta de id {id} não encontrada!");
-            return Ok(consultation);
+            var result = await _consultationService.GetByIdAsync(id);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => Ok(result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -75,28 +71,14 @@ namespace ProntPet.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ConsultationRequest consultationRequest)
         {
-            var consultation = consultationRequest.ToEntity();
-            var recordExists = await _context
-                .MedicalRecords
-                .AnyAsync(mc => mc.Id == consultation.IdMedicalRecord);
+            var result = await _consultationService.CreateAsync(consultationRequest);
 
-            if (!recordExists)
+            return result.Status switch
             {
-                return NotFound($"O protuário de id {consultation.IdMedicalRecord} não foi encontrado!");
-            }
-
-            var clinicExists = await _context
-                .Clinics
-                .AnyAsync(c => c.Id == consultation.IdClinic);
-
-            if (!clinicExists)
-            {
-                return NotFound($"A clínica de id {consultation.IdClinic} não foi encontrada!");
-            }
-
-            _context.Consultations.Add(consultation);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new {id = consultation.Id}, consultation);
+                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -113,14 +95,14 @@ namespace ProntPet.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] ConsultationRequest request)
         {
+            var result = await _consultationService.UpdateAsync(id, request);
 
-            var updatedConsultation = request.ToEntity();
-
-            var consultation = await _context.Consultations.FindAsync(id);
-            if (consultation == null) return NotFound();
-            consultation.Update(updatedConsultation.ConsultationDate, updatedConsultation.Symptoms, updatedConsultation.Diagnosis, updatedConsultation.Observations);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -136,11 +118,14 @@ namespace ProntPet.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var consultation = await _context.Consultations.FindAsync(id);
-            if (consultation == null) return NotFound();
-            _context.Consultations.Remove(consultation);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            var result = await _consultationService.DeleteAsync(id);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
     }

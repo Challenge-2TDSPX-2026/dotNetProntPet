@@ -1,9 +1,7 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProntPet.Data;
+using ProntPet.Common;
 using ProntPet.dtos;
-using ProntPet.Models;
+using ProntPet.Services;
 
 namespace ProntPet.Controllers
 {
@@ -14,12 +12,11 @@ namespace ProntPet.Controllers
     [ApiController]
     public class PetController : ControllerBase
     {
-        
-        private readonly AppDbContext _context;
+        private readonly IPetService _petService;
 
-        public PetController(AppDbContext context)
+        public PetController(IPetService petService)
         {
-            _context = context;
+            _petService = petService;
         }
 
         /// <summary>
@@ -34,11 +31,8 @@ namespace ProntPet.Controllers
         [HttpGet("tutor/{idTutor}")]
         public async Task<IActionResult> GetPetsByTutor(int idTutor)
         {
-            var pets = await _context
-                .Pets.Where(r => r.IdTutor == idTutor).ToListAsync();
-
+            var pets = await _petService.GetByTutorAsync(idTutor);
             return Ok(pets);
-            
         }
 
         /// <summary>
@@ -54,9 +48,14 @@ namespace ProntPet.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var pet = await _context.Pets.FindAsync(id);
-            if (pet == null) return NotFound($"Pet de id {id} não encontrado!");
-            return Ok(pet);
+            var result = await _petService.GetByIdAsync(id);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => Ok(result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -74,24 +73,14 @@ namespace ProntPet.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] PetRequest petRequest)
         {
-            var tutorExists = await _context
-                .Tutors.AnyAsync(t => t.Id == petRequest.IdTutor);
+            var result = await _petService.CreateAsync(petRequest);
 
-            if (!tutorExists)
+            return result.Status switch
             {
-                return NotFound($"O tutor de Id {petRequest.IdTutor} não foi encontrado.");
-            }
-
-            if (petRequest.Weight != null & petRequest.Weight < 0)
-            {
-                return BadRequest("O peso do pet não pode ser menor que 0");
-            }
-
-            var pet = petRequest.ToEntity();
-            _context.Pets.Add(pet);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new {id = pet.Id}, pet);
+                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -108,18 +97,14 @@ namespace ProntPet.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] PetUpdateRequest request)
         {
+            var result = await _petService.UpdateAsync(id, request);
 
-            var updatedPet = request.ToEntity();
-
-            var pet = await _context.Pets.FindAsync(id);
-
-            if (pet == null) return NotFound($"Pet de id {id} não encontrado");
-
-            pet.Update(updatedPet.Name, updatedPet.Species, updatedPet.Breed, updatedPet.BirthDate, 
-                        updatedPet.Weight, updatedPet.Sex);
-
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -135,14 +120,14 @@ namespace ProntPet.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var pet = await _context.Pets.FindAsync(id);
+            var result = await _petService.DeleteAsync(id);
 
-            if (pet == null) return NotFound($"Pet de id {id} não encontrado");
-
-            _context.Pets.Remove(pet);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
-
     }
 }

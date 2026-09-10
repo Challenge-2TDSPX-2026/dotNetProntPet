@@ -1,9 +1,8 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProntPet.Data;
-using ProntPet.dtos;
+using ProntPet.Common;
 using ProntPet.Dtos;
+using ProntPet.dtos;
+using ProntPet.Services;
 
 namespace ProntPet.Controllers
 {
@@ -14,12 +13,11 @@ namespace ProntPet.Controllers
     [ApiController]
     public class TutorController : ControllerBase
     {
-        
-        private readonly AppDbContext _context;
+        private readonly ITutorService _tutorService;
 
-        public TutorController(AppDbContext context)
+        public TutorController(ITutorService tutorService)
         {
-            _context = context;
+            _tutorService = tutorService;
         }
 
         /// <summary>
@@ -33,10 +31,8 @@ namespace ProntPet.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var tutors = await _context.Tutors.ToListAsync();
-
+            var tutors = await _tutorService.GetAllAsync();
             var response = tutors.Select(t => TutorResponse.FromEntity(t));
-
             return Ok(response);
         }
 
@@ -53,9 +49,14 @@ namespace ProntPet.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var tutor = await _context.Tutors.FindAsync(id);
-            if (tutor == null) return NotFound();
-            return Ok(TutorResponse.FromEntity(tutor));
+            var result = await _tutorService.GetByIdAsync(id);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => Ok(TutorResponse.FromEntity(result.Value!)),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -71,10 +72,14 @@ namespace ProntPet.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(TutorRequest tutorRequest)
         {
-            var tutor = tutorRequest.ToEntity();
-            _context.Tutors.Add(tutor);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = tutor.Id }, tutor);
+            var result = await _tutorService.CreateAsync(tutorRequest);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, TutorResponse.FromEntity(result.Value!)),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -91,13 +96,14 @@ namespace ProntPet.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] TutorRequest updatedTutor)
         {
-            var tutor = await _context.Tutors.FindAsync(id);
+            var result = await _tutorService.UpdateAsync(id, updatedTutor);
 
-            if (tutor == null) return NotFound();
-
-            tutor.Update(updatedTutor.Name, updatedTutor.Cpf, updatedTutor.Phone, updatedTutor.Email, updatedTutor.Password, updatedTutor.Address);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
         /// <summary>
@@ -113,11 +119,14 @@ namespace ProntPet.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var tutor = await _context.Tutors.FindAsync(id);
-            if (tutor == null) return  NotFound();
-            _context.Tutors.Remove(tutor);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            var result = await _tutorService.DeleteAsync(id);
+
+            return result.Status switch
+            {
+                ServiceStatus.Ok => NoContent(),
+                ServiceStatus.NotFound => NotFound(result.Message),
+                _ => BadRequest(result.Message)
+            };
         }
 
     }
