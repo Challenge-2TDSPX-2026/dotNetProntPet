@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ProntPet.API/ProntPet.API.csproj" />
+  <Project Path="ProntPet.UnitTests/ProntPet.UnitTests.csproj" />
+</Solution>
