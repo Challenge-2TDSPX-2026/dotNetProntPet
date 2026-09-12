@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="ProntPet.API/ProntPet.API.csproj" />
+  <Project Path="ProntPet.IntegrationTests/ProntPet.IntegrationTests.csproj" />
   <Project Path="ProntPet.UnitTests/ProntPet.UnitTests.csproj" />
 </Solution>

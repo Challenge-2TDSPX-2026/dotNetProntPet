@@ -1,4 +1,5 @@
 using ProntPet.Infrastructure;
+using ProntPet.Middleware;
 using ProntPet.Services;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
@@ -45,6 +46,10 @@ try
     builder.Services.AddScoped<IClinicService, ClinicService>();
     builder.Services.AddScoped<IConsultationService, ConsultationService>();
 
+    // Tratamento global de exceções (IExceptionHandler, .NET 8)
+    builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+    builder.Services.AddProblemDetails();
+
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(options =>
@@ -73,6 +78,10 @@ try
         app.UseSwagger();
         app.UseSwaggerUI();
     }
+
+    // Captura qualquer exceção não tratada, loga em nível
+    // Error e devolve uma resposta padronizada (ProblemDetails) ao cliente.
+    app.UseExceptionHandler();
 
     // Loga uma linha estruturada por requisição HTTP concluída (método, path, status, duração).
     app.UseSerilogRequestLogging();
@@ -106,3 +115,8 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// Necessário para o WebApplicationFactory<Program> dos testes de integração:
+// com top-level statements, a classe Program gerada pelo compilador é 'internal' por padrão,
+// o que a torna inacessível para o assembly de testes. Este partial a torna 'public'.
+public partial class Program { }
