@@ -79,7 +79,11 @@ try
         app.UseSwaggerUI();
     }
 
-    // Captura qualquer exceção não tratada, loga em nível
+    // Precisa vir antes do exception handler e do request logging para que o
+    // CorrelationId já esteja disponível no contexto de log em ambos os casos.
+    app.UseMiddleware<CorrelationIdMiddleware>();
+
+    // Última linha de defesa: captura qualquer exceção não tratada, loga em nível
     // Error e devolve uma resposta padronizada (ProblemDetails) ao cliente.
     app.UseExceptionHandler();
 
