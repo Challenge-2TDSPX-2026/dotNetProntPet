@@ -4,6 +4,8 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using ProntPet.Data;
 using ProntPet.Diagnostics;
+using ProntPet.API.Data.Mongo;
+using ProntPet.API.Infrastructure;
 
 namespace ProntPet.Infrastructure;
 
@@ -22,14 +24,19 @@ public static class DependencyInjection
             options.UseOracle(connectionString,
                 b => b.UseOracleSQLCompatibility(OracleSQLCompatibility.DatabaseVersion19)));
 
+        // 1.1 Configuração do MongoDB (NoSQL)
+        services.Configure<MongoDbSettings>(configuration.GetSection(MongoDbSettings.SectionName));
+        services.AddSingleton<MongoDbContext>(); // MongoClient gerencia o pool de conexões internamente
+
         // 2. Configuração dos Health Checks
         services.AddHealthChecks()
-            // Liveness: apenas confirma que o processo da API está de pé, sem depender de nada externo.
             .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(),
                 tags: new[] { "live" })
-            // Readiness: confirma que a API consegue de fato conversar com o banco Oracle.
             .AddDbContextCheck<AppDbContext>(
                 name: "oracle-database",
+                tags: new[] { "ready" })
+            .AddCheck<MongoHealthCheck>(
+                name: "mongodb",
                 tags: new[] { "ready" });
 
         // 3. Configuração do OpenTelemetry (Tracing + Métricas)
