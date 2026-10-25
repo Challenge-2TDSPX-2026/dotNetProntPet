@@ -8,5 +8,9 @@
   "AllowedHosts": "*",
   "ConnectionStrings": {
     "OracleConnection": "User Id=;Password=;Data Source=oracle.fiap.com.br:1521/orcl;"
+  },
+  "MongoDb": {
+    "ConnectionString": "mongodb://localhost:27017",
+    "DatabaseName": "prontpet"
   }
 }
