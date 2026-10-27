@@ -45,12 +45,16 @@ try
     builder.Services.AddScoped<IMedicalRecordService, MedicalRecordService>();
     builder.Services.AddScoped<IClinicService, ClinicService>();
     builder.Services.AddScoped<IConsultationService, ConsultationService>();
+    builder.Services.AddScoped<IPetTimelineService, PetTimelineService>();
 
     // Tratamento global de exceções (IExceptionHandler, .NET 8)
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddProblemDetails();
 
     builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .AddJsonOptions(o =>
+            o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(options =>
     {

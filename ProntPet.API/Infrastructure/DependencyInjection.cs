@@ -6,6 +6,7 @@ using ProntPet.Data;
 using ProntPet.Diagnostics;
 using ProntPet.API.Data.Mongo;
 using ProntPet.API.Infrastructure;
+using ProntPet.API.Repositories;
 
 namespace ProntPet.Infrastructure;
 
@@ -27,6 +28,7 @@ public static class DependencyInjection
         // 1.1 Configuração do MongoDB (NoSQL)
         services.Configure<MongoDbSettings>(configuration.GetSection(MongoDbSettings.SectionName));
         services.AddSingleton<MongoDbContext>(); // MongoClient gerencia o pool de conexões internamente
+        services.AddSingleton<IPetTimelineRepository, PetTimelineRepository>();
 
         // 2. Configuração dos Health Checks
         services.AddHealthChecks()
