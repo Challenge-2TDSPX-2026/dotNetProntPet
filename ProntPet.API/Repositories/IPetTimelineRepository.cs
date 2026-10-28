@@ -1,8 +1,11 @@
+using ProntPet.Common;
+using ProntPet.Dtos;
 using ProntPet.API.Models;
 
-namespace ProntPet.API.Repositories;
+namespace ProntPet.Repositories;
 
 public interface IPetTimelineRepository : IRepository<PetTimelineEntry>
 {
-    Task<List<PetTimelineEntry>> GetByPetAsync(int idPet, CancellationToken ct = default);
+    Task<PagedResult<PetTimelineEntry>> GetPagedByPetAsync(
+        int idPet, PetTimelineQueryParameters query, CancellationToken ct = default);
 }

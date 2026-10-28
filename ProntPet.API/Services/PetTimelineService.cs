@@ -5,7 +5,7 @@ using ProntPet.Data;
 using ProntPet.Diagnostics;
 using ProntPet.Dtos;
 using ProntPet.API.Models;
-using ProntPet.API.Repositories;
+using ProntPet.Repositories;
 
 namespace ProntPet.Services;
 
@@ -25,12 +25,24 @@ public class PetTimelineService : IPetTimelineService
         _logger = logger;
     }
 
-    public async Task<List<PetTimelineEntry>> GetByPetAsync(int idPet)
+    public async Task<ServiceResult<PagedResult<PetTimelineEntry>>> GetByPetAsync(
+    int idPet, PetTimelineQueryParameters query)
     {
         using var activity = ActivitySource.StartActivity("GetPetTimelineByPet");
         activity?.SetTag("pet.id", idPet);
+        activity?.SetTag("page.number", query.PageNumber);
+        activity?.SetTag("page.size", query.PageSize);
 
-        return await _repository.GetByPetAsync(idPet);
+        if (query.From.HasValue && query.To.HasValue &&
+            query.From.Value.ToUtcAssumingUtc() > query.To.Value.ToUtcAssumingUtc())
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, "Intervalo de datas inválido");
+            return ServiceResult<PagedResult<PetTimelineEntry>>.ValidationError(
+                "A data inicial (from) não pode ser maior que a data final (to).");
+        }
+
+        var page = await _repository.GetPagedByPetAsync(idPet, query);
+        return ServiceResult<PagedResult<PetTimelineEntry>>.Ok(page);
     }
 
     public async Task<ServiceResult<PetTimelineEntry>> GetByIdAsync(string id)
