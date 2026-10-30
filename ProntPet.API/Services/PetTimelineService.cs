@@ -5,7 +5,7 @@ using ProntPet.Data;
 using ProntPet.Diagnostics;
 using ProntPet.Dtos;
 using ProntPet.API.Models;
-using ProntPet.Repositories;
+using ProntPet.API.Repositories;
 
 namespace ProntPet.Services;
 
@@ -26,7 +26,7 @@ public class PetTimelineService : IPetTimelineService
     }
 
     public async Task<ServiceResult<PagedResult<PetTimelineEntry>>> GetByPetAsync(
-    int idPet, PetTimelineQueryParameters query)
+        int idPet, PetTimelineQueryParameters query)
     {
         using var activity = ActivitySource.StartActivity("GetPetTimelineByPet");
         activity?.SetTag("pet.id", idPet);

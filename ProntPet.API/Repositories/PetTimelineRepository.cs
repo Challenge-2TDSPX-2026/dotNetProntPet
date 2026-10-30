@@ -7,7 +7,7 @@ using ProntPet.API.Data.Mongo;
 using ProntPet.Dtos;
 using ProntPet.API.Models;
 
-namespace ProntPet.Repositories;
+namespace ProntPet.API.Repositories;
 
 public class PetTimelineRepository : MongoRepository<PetTimelineEntry>, IPetTimelineRepository
 {

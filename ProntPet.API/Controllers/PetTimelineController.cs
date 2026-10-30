@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ProntPet.Common;
 using ProntPet.Dtos;
+using ProntPet.API.Models;
 using ProntPet.Services;
 
 namespace ProntPet.Controllers
@@ -19,27 +20,55 @@ namespace ProntPet.Controllers
             _service = service;
         }
 
-        /// <summary>Lista os registros da timeline de um pet (mais recentes primeiro).</summary>
+        /// <summary>Lista a timeline de um pet com paginação, ordenação, filtros e links HATEOAS.</summary>
+        /// <remarks>
+        /// Padrão: <c>sortBy=occurredAt&amp;ascending=false</c> (mais recentes primeiro), 10 itens por página (máximo 50).
+        /// Ordenações aceitas: occurredAt, title, type, createdAt. Informe <c>ascending</c> junto com <c>sortBy</c>.
+        /// </remarks>
         /// <param name="idPet">Identificador do pet.</param>
-        /// <response code="200">Registros retornados (pode ser lista vazia).</response>
-        [HttpGet("pet/{idPet:int}")]
-        public async Task<IActionResult> GetByPet(int idPet)
+        /// <param name="query">Paginação, ordenação e filtros.</param>
+        /// <response code="200">Página de registros retornada (pode ser vazia).</response>
+        /// <response code="400">Parâmetros inválidos (ex.: from maior que to).</response>
+        [HttpGet("pet/{idPet:int}", Name = "GetPetTimelineByPet")]
+        [ProducesResponseType(typeof(PagedResponse<PetTimelineResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetByPet(int idPet, [FromQuery] PetTimelineQueryParameters query)
         {
-            var entries = await _service.GetByPetAsync(idPet);
-            return Ok(entries);
+            var result = await _service.GetByPetAsync(idPet, query);
+
+            if (result.Status != ServiceStatus.Ok)
+                return BadRequest(result.Message);
+
+            var page = result.Value!.Map(ToResponse);
+
+            // Filtros e valores de rota que precisam ser repetidos nos links de navegação.
+            var filters = new Dictionary<string, object?>
+            {
+                ["idPet"] = idPet,
+                ["type"] = query.Type,
+                ["tag"] = query.Tag,
+                ["search"] = query.Search,
+                ["from"] = ToIso(query.From),
+                ["to"] = ToIso(query.To)
+            };
+
+            var links = PaginationLinkBuilder.Build(
+                v => Url.Link("GetPetTimelineByPet", v), query, page.TotalPages, filters);
+
+            return Ok(PagedResponse<PetTimelineResponse>.From(page, links));
         }
 
         /// <summary>Obtém um registro da timeline pelo identificador (ObjectId, 24 caracteres).</summary>
         /// <response code="200">Registro encontrado.</response>
         /// <response code="404">Registro não encontrado.</response>
-        [HttpGet("{id:length(24)}")]
+        [HttpGet("{id:length(24)}", Name = "GetPetTimelineById")]
+        [ProducesResponseType(typeof(PetTimelineResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetById(string id)
         {
             var result = await _service.GetByIdAsync(id);
 
             return result.Status switch
             {
-                ServiceStatus.Ok => Ok(result.Value),
+                ServiceStatus.Ok => Ok(ToResponse(result.Value!)),
                 ServiceStatus.NotFound => NotFound(result.Message),
                 _ => BadRequest(result.Message)
             };
@@ -50,13 +79,14 @@ namespace ProntPet.Controllers
         /// <response code="404">Pet não encontrado.</response>
         /// <response code="400">Dados inválidos.</response>
         [HttpPost]
+        [ProducesResponseType(typeof(PetTimelineResponse), StatusCodes.Status201Created)]
         public async Task<IActionResult> Create([FromBody] PetTimelineRequest request)
         {
             var result = await _service.CreateAsync(request);
 
             return result.Status switch
             {
-                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value),
+                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, ToResponse(result.Value)),
                 ServiceStatus.NotFound => NotFound(result.Message),
                 _ => BadRequest(result.Message)
             };
@@ -65,7 +95,7 @@ namespace ProntPet.Controllers
         /// <summary>Atualiza um registro da timeline.</summary>
         /// <response code="204">Registro atualizado.</response>
         /// <response code="404">Registro não encontrado.</response>
-        [HttpPut("{id:length(24)}")]
+        [HttpPut("{id:length(24)}", Name = "UpdatePetTimelineEntry")]
         public async Task<IActionResult> Update(string id, [FromBody] PetTimelineUpdateRequest request)
         {
             var result = await _service.UpdateAsync(id, request);
@@ -81,7 +111,7 @@ namespace ProntPet.Controllers
         /// <summary>Remove um registro da timeline.</summary>
         /// <response code="204">Registro removido.</response>
         /// <response code="404">Registro não encontrado.</response>
-        [HttpDelete("{id:length(24)}")]
+        [HttpDelete("{id:length(24)}", Name = "DeletePetTimelineEntry")]
         public async Task<IActionResult> Delete(string id)
         {
             var result = await _service.DeleteAsync(id);
@@ -93,5 +123,23 @@ namespace ProntPet.Controllers
                 _ => BadRequest(result.Message)
             };
         }
+
+        /// <summary>Converte a entidade em response, anexando os links HATEOAS do recurso.</summary>
+        private PetTimelineResponse ToResponse(PetTimelineEntry entry)
+        {
+            var links = new List<LinkDto>
+            {
+                new(Url.Link("GetPetTimelineById", new { id = entry.Id })!, "self", "GET"),
+                new(Url.Link("UpdatePetTimelineEntry", new { id = entry.Id })!, "update_entry", "PUT"),
+                new(Url.Link("DeletePetTimelineEntry", new { id = entry.Id })!, "delete_entry", "DELETE"),
+                new(Url.Link("GetPetTimelineByPet", new { idPet = entry.IdPet })!, "pet_timeline", "GET")
+            };
+
+            return PetTimelineResponse.FromEntity(entry, links);
+        }
+
+        // Datas nos links em ISO-8601 UTC: independe de cultura e é lida de volta sem ambiguidade.
+        private static string? ToIso(DateTime? value) =>
+            value?.ToUtcAssumingUtc().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'");
     }
 }
