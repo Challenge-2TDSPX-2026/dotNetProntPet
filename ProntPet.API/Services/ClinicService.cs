@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ProntPet.Common;
 using ProntPet.Data;
 using ProntPet.Diagnostics;
+using ProntPet.Dtos;
 using ProntPet.Models;
 
 namespace ProntPet.Services;
@@ -25,11 +26,41 @@ public class ClinicService : IClinicService
         _clinicsCreatedCounter = meter.CreateCounter<int>("clinics_created_total", description: "Total de clínicas cadastradas");
     }
 
-    public async Task<List<Clinic>> GetAllAsync()
+    public async Task<ServiceResult<PagedResult<Clinic>>> GetAllAsync(ClinicQueryParameters query)
     {
         using var activity = ActivitySource.StartActivity("GetAllClinics");
+        activity?.SetTag("page.number", query.PageNumber);
+        activity?.SetTag("page.size", query.PageSize);
 
-        return await _context.Clinics.ToListAsync();
+        IQueryable<Clinic> clinics = _context.Clinics.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(query.Name))
+        {
+            var name = query.Name.Trim().ToLower();
+            clinics = clinics.Where(c => c.Name.ToLower().Contains(name));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Cnpj))
+        {
+            var cnpj = query.Cnpj.Trim();
+            clinics = clinics.Where(c => c.Cnpj.Contains(cnpj));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Address))
+        {
+            var address = query.Address.Trim().ToLower();
+            clinics = clinics.Where(c => c.Address.ToLower().Contains(address));
+        }
+
+        IOrderedQueryable<Clinic> ordered = query.SortBy?.Trim().ToLowerInvariant() switch
+        {
+            "cnpj" => clinics.OrderByDirection(c => c.Cnpj, query.Ascending),
+            "address" => clinics.OrderByDirection(c => c.Address, query.Ascending),
+            _ => clinics.OrderByDirection(c => c.Name, query.Ascending)
+        };
+
+        var page = await ordered.ThenBy(c => c.Id).ToPagedResultAsync(query);
+        return ServiceResult<PagedResult<Clinic>>.Ok(page);
     }
 
     public async Task<ServiceResult<Clinic>> GetByIdAsync(int id)

@@ -9,7 +9,7 @@ namespace ProntPet.Services;
 /// </summary>
 public interface ITutorService
 {
-    Task<List<Tutor>> GetAllAsync();
+    Task<ServiceResult<PagedResult<Tutor>>> GetAllAsync(TutorQueryParameters query);
     Task<ServiceResult<Tutor>> GetByIdAsync(int id);
     Task<ServiceResult<Tutor>> CreateAsync(TutorRequest request);
     Task<ServiceResult<bool>> UpdateAsync(int id, TutorRequest request);

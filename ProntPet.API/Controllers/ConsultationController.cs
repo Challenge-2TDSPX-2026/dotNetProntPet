@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using ProntPet.Common;
+using ProntPet.Dtos;
+using ProntPet.Models;
 using ProntPet.Services;
 
 namespace ProntPet.Controllers
 {
     /// <summary>
-    /// Gerencia consultas veterinárias vinculadas a prontuários e clínicas.
+    /// Gerencia as consultas veterinárias vinculadas a prontuários e clínicas.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -19,80 +21,93 @@ namespace ProntPet.Controllers
         }
 
         /// <summary>
-        /// Lista as consultas de um prontuário médico.
+        /// Lista as consultas de um prontuário com paginação, ordenação, filtros e links HATEOAS.
         /// </summary>
         /// <remarks>
-        /// Retorna todas as consultas associadas ao prontuário identificado por <paramref name="idRecord"/>.
+        /// Padrão: 10 itens por página (máximo 50), mais recentes primeiro
+        /// (<c>sortBy=consultationDate&amp;ascending=false</c>). Ordenações aceitas: consultationDate, idClinic, diagnosis.
+        /// Filtros: idClinic, from e to (yyyy-MM-dd, inclusivos) e search (contém o texto em sintomas, diagnóstico e observações).
+        /// Exemplo: <c>/api/Consultation/medical-record/1?idClinic=2&amp;from=2026-01-01&amp;search=vômito</c>.
         /// </remarks>
-        /// <param name="idRecord">Identificador do prontuário médico.</param>
-        /// <returns>Lista de consultas do prontuário.</returns>
-        /// <response code="200">Consultas retornadas com sucesso (pode ser lista vazia).</response>
-        [HttpGet("medical-record/{idRecord}")]
-        public async Task<IActionResult> GetConsultationsByMedicalRecord(int idRecord)
+        /// <param name="idRecord">Identificador do prontuário.</param>
+        /// <param name="query">Paginação, ordenação e filtros.</param>
+        /// <response code="200">Página de consultas retornada (pode ser vazia).</response>
+        /// <response code="400">Parâmetros inválidos (ex.: from maior que to).</response>
+        [HttpGet("medical-record/{idRecord}", Name = "GetConsultationsByMedicalRecord")]
+        [ProducesResponseType(typeof(PagedResponse<ConsultationResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetConsultationsByMedicalRecord(
+            int idRecord, [FromQuery] ConsultationQueryParameters query)
         {
-            var consultations = await _consultationService.GetByMedicalRecordAsync(idRecord);
-            return Ok(consultations);
+            var result = await _consultationService.GetByMedicalRecordAsync(idRecord, query);
+
+            if (result.Status != ServiceStatus.Ok)
+                return BadRequest(result.Message);
+
+            var page = result.Value!.Map(ToResponse);
+
+            var filters = new Dictionary<string, object?>
+            {
+                ["idRecord"] = idRecord,
+                ["idClinic"] = query.IdClinic,
+                ["from"] = query.From.ToIsoDate(),
+                ["to"] = query.To.ToIsoDate(),
+                ["search"] = query.Search
+            };
+
+            var links = PaginationLinkBuilder.Build(
+                v => Url.Link("GetConsultationsByMedicalRecord", v), query, page.TotalPages, filters);
+
+            return Ok(PagedResponse<ConsultationResponse>.From(page, links));
         }
 
         /// <summary>
         /// Obtém uma consulta pelo identificador.
         /// </summary>
-        /// <remarks>
-        /// Busca uma única consulta veterinária pelo seu ID. Retorna 404 se não existir.
-        /// </remarks>
         /// <param name="id">Identificador da consulta.</param>
-        /// <returns>Dados da consulta encontrada.</returns>
         /// <response code="200">Consulta encontrada.</response>
         /// <response code="404">Consulta não encontrada.</response>
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetConsultationById")]
+        [ProducesResponseType(typeof(ConsultationResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _consultationService.GetByIdAsync(id);
 
             return result.Status switch
             {
-                ServiceStatus.Ok => Ok(result.Value),
+                ServiceStatus.Ok => Ok(ToResponse(result.Value!)),
                 ServiceStatus.NotFound => NotFound(result.Message),
                 _ => BadRequest(result.Message)
             };
         }
 
         /// <summary>
-        /// Registra uma nova consulta veterinária.
+        /// Registra uma nova consulta.
         /// </summary>
-        /// <remarks>
-        /// Cria uma consulta vinculada a um prontuário e a uma clínica.
-        /// Retorna 404 se o prontuário ou a clínica não existirem.
-        /// </remarks>
-        /// <param name="consultationRequest">Dados da consulta a ser criada.</param>
-        /// <returns>Consulta criada com o identificador gerado.</returns>
-        /// <response code="201">Consulta registrada com sucesso.</response>
-        /// <response code="404">Prontuário ou clínica informados não encontrados.</response>
+        /// <param name="consultationRequest">Dados da consulta.</param>
+        /// <response code="201">Consulta registrada.</response>
+        /// <response code="404">Prontuário ou clínica não encontrados.</response>
         [HttpPost]
+        [ProducesResponseType(typeof(ConsultationResponse), StatusCodes.Status201Created)]
         public async Task<IActionResult> Create([FromBody] ConsultationRequest consultationRequest)
         {
             var result = await _consultationService.CreateAsync(consultationRequest);
 
             return result.Status switch
             {
-                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value),
+                ServiceStatus.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, ToResponse(result.Value!)),
                 ServiceStatus.NotFound => NotFound(result.Message),
                 _ => BadRequest(result.Message)
             };
         }
 
         /// <summary>
-        /// Atualiza os dados de uma consulta existente.
+        /// Atualiza uma consulta existente.
         /// </summary>
-        /// <remarks>
-        /// Atualiza data, sintomas, diagnóstico e observações da consulta identificada por <paramref name="id"/>.
-        /// </remarks>
         /// <param name="id">Identificador da consulta.</param>
         /// <param name="request">Novos dados da consulta.</param>
-        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
-        /// <response code="204">Consulta atualizada com sucesso.</response>
+        /// <response code="204">Consulta atualizada.</response>
         /// <response code="404">Consulta não encontrada.</response>
-        [HttpPut("{id}")]
+        [HttpPut("{id}", Name = "UpdateConsultation")]
         public async Task<IActionResult> Update(int id, [FromBody] ConsultationRequest request)
         {
             var result = await _consultationService.UpdateAsync(id, request);
@@ -106,16 +121,12 @@ namespace ProntPet.Controllers
         }
 
         /// <summary>
-        /// Remove uma consulta do sistema.
+        /// Remove uma consulta.
         /// </summary>
-        /// <remarks>
-        /// Exclui permanentemente a consulta identificada por <paramref name="id"/>.
-        /// </remarks>
         /// <param name="id">Identificador da consulta.</param>
-        /// <returns>Nenhum conteúdo em caso de sucesso.</returns>
-        /// <response code="204">Consulta removida com sucesso.</response>
+        /// <response code="204">Consulta removida.</response>
         /// <response code="404">Consulta não encontrada.</response>
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}", Name = "DeleteConsultation")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _consultationService.DeleteAsync(id);
@@ -128,5 +139,21 @@ namespace ProntPet.Controllers
             };
         }
 
+        /// <summary>Converte a entidade em response, anexando os links HATEOAS do recurso.</summary>
+        private ConsultationResponse ToResponse(Consultation consultation)
+        {
+            var links = new List<LinkDto>
+            {
+                new(Url.Link("GetConsultationById", new { id = consultation.Id })!, LinkRelations.Self, "GET"),
+                new(Url.Link("UpdateConsultation", new { id = consultation.Id })!, "update_consultation", "PUT"),
+                new(Url.Link("DeleteConsultation", new { id = consultation.Id })!, "delete_consultation", "DELETE"),
+                new(Url.Link("GetMedicalRecordById", new { id = consultation.IdMedicalRecord })!, "medical_record", "GET"),
+                new(Url.Link("GetClinicById", new { id = consultation.IdClinic })!, "clinic", "GET"),
+                new(Url.Link("GetConsultationsByMedicalRecord", new { idRecord = consultation.IdMedicalRecord })!,
+                    "medical_record_consultations", "GET")
+            };
+
+            return ConsultationResponse.FromEntity(consultation, links);
+        }
     }
 }

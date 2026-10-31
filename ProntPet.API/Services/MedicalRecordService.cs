@@ -26,12 +26,43 @@ public class MedicalRecordService : IMedicalRecordService
         _medicalRecordsCreatedCounter = meter.CreateCounter<int>("medical_records_created_total", description: "Total de prontuários criados");
     }
 
-    public async Task<List<MedicalRecord>> GetByPetAsync(int idPet)
+    public async Task<ServiceResult<PagedResult<MedicalRecord>>> GetByPetAsync(int idPet, MedicalRecordQueryParameters query)
     {
         using var activity = ActivitySource.StartActivity("GetMedicalRecordsByPet");
         activity?.SetTag("pet.id", idPet);
+        activity?.SetTag("page.number", query.PageNumber);
+        activity?.SetTag("page.size", query.PageSize);
 
-        return await _context.MedicalRecords.Where(mc => mc.IdPet == idPet).ToListAsync();
+        IQueryable<MedicalRecord> records = _context.MedicalRecords.AsNoTracking().Where(mc => mc.IdPet == idPet);
+
+        if (!string.IsNullOrWhiteSpace(query.BloodType))
+        {
+            var bloodType = query.BloodType.Trim().ToLower();
+            records = records.Where(mc => mc.BloodType.ToLower() == bloodType);
+        }
+
+        if (query.IsCastrated.HasValue)
+        {
+            var isCastrated = query.IsCastrated.Value;
+            records = records.Where(mc => mc.IsCastrated == isCastrated);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim().ToLower();
+            records = records.Where(mc =>
+                (mc.Allergies != null && mc.Allergies.ToLower().Contains(search)) ||
+                (mc.ChronicDiseases != null && mc.ChronicDiseases.ToLower().Contains(search)));
+        }
+
+        IOrderedQueryable<MedicalRecord> ordered = query.SortBy?.Trim().ToLowerInvariant() switch
+        {
+            "bloodtype" => records.OrderByDirection(mc => mc.BloodType, query.Ascending),
+            _ => records.OrderByDirection(mc => mc.LastUpdate, query.Ascending)
+        };
+
+        var page = await ordered.ThenBy(mc => mc.Id).ToPagedResultAsync(query);
+        return ServiceResult<PagedResult<MedicalRecord>>.Ok(page);
     }
 
     public async Task<ServiceResult<MedicalRecord>> GetByIdAsync(int id)

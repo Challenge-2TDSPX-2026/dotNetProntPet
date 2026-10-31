@@ -1,4 +1,5 @@
 using ProntPet.Common;
+using ProntPet.Dtos;
 using ProntPet.Models;
 
 namespace ProntPet.Services;
@@ -8,7 +9,7 @@ namespace ProntPet.Services;
 /// </summary>
 public interface IClinicService
 {
-    Task<List<Clinic>> GetAllAsync();
+    Task<ServiceResult<PagedResult<Clinic>>> GetAllAsync(ClinicQueryParameters query);
     Task<ServiceResult<Clinic>> GetByIdAsync(int id);
     Task<ServiceResult<Clinic>> CreateAsync(ClinicRequest request);
     Task<ServiceResult<bool>> UpdateAsync(int id, ClinicRequest request);

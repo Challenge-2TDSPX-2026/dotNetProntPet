@@ -1,5 +1,6 @@
 using ProntPet.Common;
 using ProntPet.dtos;
+using ProntPet.Dtos;
 using ProntPet.Models;
 
 namespace ProntPet.Services;
@@ -9,7 +10,7 @@ namespace ProntPet.Services;
 /// </summary>
 public interface IPetService
 {
-    Task<List<Pet>> GetByTutorAsync(int idTutor);
+    Task<ServiceResult<PagedResult<Pet>>> GetByTutorAsync(int idTutor, PetQueryParameters query);
     Task<ServiceResult<Pet>> GetByIdAsync(int id);
     Task<ServiceResult<Pet>> CreateAsync(PetRequest request);
     Task<ServiceResult<bool>> UpdateAsync(int id, PetUpdateRequest request);

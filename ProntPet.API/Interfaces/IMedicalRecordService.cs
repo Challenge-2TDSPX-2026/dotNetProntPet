@@ -9,7 +9,7 @@ namespace ProntPet.Services;
 /// </summary>
 public interface IMedicalRecordService
 {
-    Task<List<MedicalRecord>> GetByPetAsync(int idPet);
+    Task<ServiceResult<PagedResult<MedicalRecord>>> GetByPetAsync(int idPet, MedicalRecordQueryParameters query);
     Task<ServiceResult<MedicalRecord>> GetByIdAsync(int id);
     Task<ServiceResult<MedicalRecord>> CreateAsync(MedicalRecordRequest request);
     Task<ServiceResult<bool>> UpdateAsync(int id, MedicalRecordRequest request);

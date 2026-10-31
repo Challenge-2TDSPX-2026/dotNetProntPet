@@ -1,3 +1,4 @@
+using ProntPet.Common;
 using ProntPet.Models;
 
 namespace ProntPet.dtos;
@@ -8,10 +9,11 @@ public record class TutorResponse(
     string Cpf,
     string Phone,
     string Email,
-    string Address
+    string Address,
+    List<LinkDto> Links
 )
 {
-    public static TutorResponse FromEntity(Tutor tutor)
+    public static TutorResponse FromEntity(Tutor tutor, List<LinkDto>? links = null)
     {
         return new TutorResponse(
             tutor.Id,
@@ -19,7 +21,8 @@ public record class TutorResponse(
             tutor.Cpf,
             tutor.Phone,
             tutor.Email,
-            tutor.Address
+            tutor.Address,
+            links ?? new List<LinkDto>()
         );
     }
 }

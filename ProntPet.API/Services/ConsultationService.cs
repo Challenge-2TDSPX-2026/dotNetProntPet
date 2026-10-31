@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ProntPet.Common;
 using ProntPet.Data;
 using ProntPet.Diagnostics;
+using ProntPet.Dtos;
 using ProntPet.Models;
 
 namespace ProntPet.Services;
@@ -25,14 +26,61 @@ public class ConsultationService : IConsultationService
         _consultationsCreatedCounter = meter.CreateCounter<int>("consultations_created_total", description: "Total de consultas registradas");
     }
 
-    public async Task<List<Consultation>> GetByMedicalRecordAsync(int idRecord)
+    public async Task<ServiceResult<PagedResult<Consultation>>> GetByMedicalRecordAsync(
+        int idRecord, ConsultationQueryParameters query)
     {
         using var activity = ActivitySource.StartActivity("GetConsultationsByMedicalRecord");
         activity?.SetTag("medical_record.id", idRecord);
+        activity?.SetTag("page.number", query.PageNumber);
+        activity?.SetTag("page.size", query.PageSize);
 
-        return await _context.Consultations
-            .Where(c => c.IdMedicalRecord == idRecord)
-            .ToListAsync();
+        if (query.From.HasValue && query.To.HasValue && query.From > query.To)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, "Intervalo de datas inválido");
+            return ServiceResult<PagedResult<Consultation>>.ValidationError(
+                "A data inicial (from) não pode ser maior que a data final (to).");
+        }
+
+        IQueryable<Consultation> consultations = _context.Consultations
+            .AsNoTracking()
+            .Where(c => c.IdMedicalRecord == idRecord);
+
+        if (query.IdClinic.HasValue)
+        {
+            var idClinic = query.IdClinic.Value;
+            consultations = consultations.Where(c => c.IdClinic == idClinic);
+        }
+
+        if (query.From.HasValue)
+        {
+            var from = query.From.Value.ToDateTime(TimeOnly.MinValue);
+            consultations = consultations.Where(c => c.ConsultationDate >= from);
+        }
+
+        if (query.To.HasValue)
+        {
+            var toExclusive = query.To.Value.ToDateTime(TimeOnly.MinValue).AddDays(1);
+            consultations = consultations.Where(c => c.ConsultationDate < toExclusive);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim().ToLower();
+            consultations = consultations.Where(c =>
+                (c.Symptoms != null && c.Symptoms.ToLower().Contains(search)) ||
+                (c.Diagnosis != null && c.Diagnosis.ToLower().Contains(search)) ||
+                (c.Observations != null && c.Observations.ToLower().Contains(search)));
+        }
+
+        IOrderedQueryable<Consultation> ordered = query.SortBy?.Trim().ToLowerInvariant() switch
+        {
+            "idclinic" => consultations.OrderByDirection(c => c.IdClinic, query.Ascending),
+            "diagnosis" => consultations.OrderByDirection(c => c.Diagnosis, query.Ascending),
+            _ => consultations.OrderByDirection(c => c.ConsultationDate, query.Ascending)
+        };
+
+        var page = await ordered.ThenBy(c => c.Id).ToPagedResultAsync(query);
+        return ServiceResult<PagedResult<Consultation>>.Ok(page);
     }
 
     public async Task<ServiceResult<Consultation>> GetByIdAsync(int id)

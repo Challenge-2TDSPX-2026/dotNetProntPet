@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ProntPet.Common;
 using ProntPet.Data;
 using ProntPet.Diagnostics;
+using ProntPet.Dtos;
 using ProntPet.dtos;
 using ProntPet.Models;
 
@@ -31,12 +32,50 @@ public class PetService : IPetService
         _petsCreatedCounter = meter.CreateCounter<int>("pets_created_total", description: "Total de pets cadastrados");
     }
 
-    public async Task<List<Pet>> GetByTutorAsync(int idTutor)
+    public async Task<ServiceResult<PagedResult<Pet>>> GetByTutorAsync(int idTutor, PetQueryParameters query)
     {
         using var activity = ActivitySource.StartActivity("GetPetsByTutor");
         activity?.SetTag("tutor.id", idTutor);
+        activity?.SetTag("page.number", query.PageNumber);
+        activity?.SetTag("page.size", query.PageSize);
 
-        return await _context.Pets.Where(r => r.IdTutor == idTutor).ToListAsync();
+        IQueryable<Pet> pets = _context.Pets.AsNoTracking().Where(p => p.IdTutor == idTutor);
+
+        if (!string.IsNullOrWhiteSpace(query.Name))
+        {
+            var name = query.Name.Trim().ToLower();
+            pets = pets.Where(p => p.Name != null && p.Name.ToLower().Contains(name));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Species))
+        {
+            var species = query.Species.Trim().ToLower();
+            pets = pets.Where(p => p.Species.ToLower() == species);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Breed))
+        {
+            var breed = query.Breed.Trim().ToLower();
+            pets = pets.Where(p => p.Breed != null && p.Breed.ToLower().Contains(breed));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Sex))
+        {
+            var sex = query.Sex.Trim().ToLower();
+            pets = pets.Where(p => p.Sex.ToLower() == sex);
+        }
+
+        IOrderedQueryable<Pet> ordered = query.SortBy?.Trim().ToLowerInvariant() switch
+        {
+            "species" => pets.OrderByDirection(p => p.Species, query.Ascending),
+            "breed" => pets.OrderByDirection(p => p.Breed, query.Ascending),
+            "birthdate" => pets.OrderByDirection(p => p.BirthDate, query.Ascending),
+            "weight" => pets.OrderByDirection(p => p.Weight, query.Ascending),
+            _ => pets.OrderByDirection(p => p.Name, query.Ascending)
+        };
+
+        var page = await ordered.ThenBy(p => p.Id).ToPagedResultAsync(query);
+        return ServiceResult<PagedResult<Pet>>.Ok(page);
     }
 
     public async Task<ServiceResult<Pet>> GetByIdAsync(int id)

@@ -26,12 +26,65 @@ public class VaccinationService : IVaccinationService
         _vaccinationsCreatedCounter = meter.CreateCounter<int>("vaccinations_created_total", description: "Total de vacinações registradas");
     }
 
-    public async Task<List<Vaccination>> GetByPetAsync(int idPet)
+    public async Task<ServiceResult<PagedResult<Vaccination>>> GetByPetAsync(int idPet, VaccinationQueryParameters query)
     {
         using var activity = ActivitySource.StartActivity("GetVaccinationsByPet");
         activity?.SetTag("pet.id", idPet);
+        activity?.SetTag("page.number", query.PageNumber);
+        activity?.SetTag("page.size", query.PageSize);
 
-        return await _context.Vaccinations.Where(v => v.IdPet == idPet).ToListAsync();
+        if (query.AppliedFrom.HasValue && query.AppliedTo.HasValue && query.AppliedFrom > query.AppliedTo)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, "Intervalo de datas inválido");
+            return ServiceResult<PagedResult<Vaccination>>.ValidationError(
+                "A data inicial (appliedFrom) não pode ser maior que a data final (appliedTo).");
+        }
+
+        IQueryable<Vaccination> vaccinations = _context.Vaccinations.AsNoTracking().Where(v => v.IdPet == idPet);
+
+        if (!string.IsNullOrWhiteSpace(query.VaccineName))
+        {
+            var vaccineName = query.VaccineName.Trim().ToLower();
+            vaccinations = vaccinations.Where(v => v.VaccineName.ToLower().Contains(vaccineName));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Lot))
+        {
+            var lot = query.Lot.Trim().ToLower();
+            vaccinations = vaccinations.Where(v => v.Lot.ToLower().Contains(lot));
+        }
+
+        if (query.AppliedFrom.HasValue)
+        {
+            var from = query.AppliedFrom.Value.ToDateTime(TimeOnly.MinValue);
+            vaccinations = vaccinations.Where(v => v.ApplicationDate >= from);
+        }
+
+        if (query.AppliedTo.HasValue)
+        {
+            // Limite exclusivo no dia seguinte: o dia "appliedTo" entra por inteiro.
+            var toExclusive = query.AppliedTo.Value.ToDateTime(TimeOnly.MinValue).AddDays(1);
+            vaccinations = vaccinations.Where(v => v.ApplicationDate < toExclusive);
+        }
+
+        if (query.Expired.HasValue)
+        {
+            var today = DateTime.Today;
+            vaccinations = query.Expired.Value
+                ? vaccinations.Where(v => v.ExpirationDate < today)
+                : vaccinations.Where(v => v.ExpirationDate >= today);
+        }
+
+        IOrderedQueryable<Vaccination> ordered = query.SortBy?.Trim().ToLowerInvariant() switch
+        {
+            "expirationdate" => vaccinations.OrderByDirection(v => v.ExpirationDate, query.Ascending),
+            "vaccinename" => vaccinations.OrderByDirection(v => v.VaccineName, query.Ascending),
+            "lot" => vaccinations.OrderByDirection(v => v.Lot, query.Ascending),
+            _ => vaccinations.OrderByDirection(v => v.ApplicationDate, query.Ascending)
+        };
+
+        var page = await ordered.ThenBy(v => v.Id).ToPagedResultAsync(query);
+        return ServiceResult<PagedResult<Vaccination>>.Ok(page);
     }
 
     public async Task<ServiceResult<Vaccination>> GetByIdAsync(int id)

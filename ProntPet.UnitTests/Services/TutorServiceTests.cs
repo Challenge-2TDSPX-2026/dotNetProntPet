@@ -26,11 +26,10 @@ public class TutorServiceTests
     [Fact]
     public async Task GetAllAsync_NenhumTutorCadastrado_RetornaListaVazia()
     {
-        // Arrange & Act
-        var result = await _sut.GetAllAsync();
+        var result = await _sut.GetAllAsync(new TutorQueryParameters());
 
-        // Assert
-        Assert.Empty(result);
+        Assert.Equal(ServiceStatus.Ok, result.Status);
+        Assert.Empty(result.Value!.Items);
     }
 
     [Fact]

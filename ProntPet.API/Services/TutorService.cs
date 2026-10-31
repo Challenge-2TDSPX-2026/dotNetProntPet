@@ -26,11 +26,42 @@ public class TutorService : ITutorService
         _tutorsCreatedCounter = meter.CreateCounter<int>("tutors_created_total", description: "Total de tutores cadastrados");
     }
 
-    public async Task<List<Tutor>> GetAllAsync()
+    public async Task<ServiceResult<PagedResult<Tutor>>> GetAllAsync(TutorQueryParameters query)
     {
         using var activity = ActivitySource.StartActivity("GetAllTutors");
+        activity?.SetTag("page.number", query.PageNumber);
+        activity?.SetTag("page.size", query.PageSize);
 
-        return await _context.Tutors.ToListAsync();
+        IQueryable<Tutor> tutors = _context.Tutors.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(query.Name))
+        {
+            var name = query.Name.Trim().ToLower();
+            tutors = tutors.Where(t => t.Name.ToLower().Contains(name));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Email))
+        {
+            var email = query.Email.Trim().ToLower();
+            tutors = tutors.Where(t => t.Email.ToLower().Contains(email));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Cpf))
+        {
+            var cpf = query.Cpf.Trim();
+            tutors = tutors.Where(t => t.Cpf.Contains(cpf));
+        }
+
+        IOrderedQueryable<Tutor> ordered = query.SortBy?.Trim().ToLowerInvariant() switch
+        {
+            "email" => tutors.OrderByDirection(t => t.Email, query.Ascending),
+            "cpf" => tutors.OrderByDirection(t => t.Cpf, query.Ascending),
+            _ => tutors.OrderByDirection(t => t.Name, query.Ascending)
+        };
+
+        // Desempate pelo Id: garante páginas estáveis (sem repetir/pular registros entre páginas).
+        var page = await ordered.ThenBy(t => t.Id).ToPagedResultAsync(query);
+        return ServiceResult<PagedResult<Tutor>>.Ok(page);
     }
 
     public async Task<ServiceResult<Tutor>> GetByIdAsync(int id)
