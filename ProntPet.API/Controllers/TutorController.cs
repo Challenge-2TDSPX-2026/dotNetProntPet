@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProntPet.Common;
 using ProntPet.Dtos;
@@ -10,6 +11,7 @@ namespace ProntPet.Controllers
     /// <summary>
     /// Gerencia o cadastro e as operações de tutores (donos de pets).
     /// </summary>
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class TutorController : ControllerBase
@@ -82,10 +84,15 @@ namespace ProntPet.Controllers
         /// <summary>
         /// Cadastra um novo tutor.
         /// </summary>
+        /// <remarks>
+        /// Rota pública (não exige token): é por aqui que o tutor se cadastra antes de fazer login em <c>POST /api/Auth/login</c>.
+        /// A senha é armazenada somente como hash.
+        /// </remarks>
         /// <param name="tutorRequest">Dados do tutor a ser criado.</param>
         /// <response code="201">Tutor criado com sucesso.</response>
         /// <response code="400">Dados inválidos.</response>
         [HttpPost]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(TutorResponse), StatusCodes.Status201Created)]
         public async Task<IActionResult> Create(TutorRequest tutorRequest)
         {

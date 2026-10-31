@@ -86,6 +86,8 @@ public class TutorService : ITutorService
         using var activity = ActivitySource.StartActivity("CreateTutor");
 
         var tutor = request.ToEntity();
+        // A senha nunca é gravada em texto puro: armazena-se somente o hash (ASP.NET Core Identity).
+        tutor.Password = TutorPasswordHasher.Hash(tutor, request.Password);
         _context.Tutors.Add(tutor);
         await _context.SaveChangesAsync();
 
@@ -111,7 +113,8 @@ public class TutorService : ITutorService
             return ServiceResult<bool>.NotFound($"Tutor de id {id} não encontrado!");
         }
 
-        tutor.Update(request.Name, request.Cpf, request.Phone, request.Email, request.Password, request.Address);
+        tutor.Update(request.Name, request.Cpf, request.Phone, request.Email,
+                      TutorPasswordHasher.Hash(tutor, request.Password), request.Address);
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Tutor {TutorId} atualizado com sucesso.", id);

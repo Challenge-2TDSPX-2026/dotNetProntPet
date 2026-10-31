@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProntPet.Common;
 using ProntPet.Dtos;
@@ -9,6 +10,7 @@ namespace ProntPet.Controllers
     /// <summary>
     /// Gerencia os prontuários médicos dos pets.
     /// </summary>
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class MedicalRecordController : ControllerBase

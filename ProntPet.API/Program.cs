@@ -37,6 +37,9 @@ try
     // Infraestrutura: DbContext (Oracle) + Health Checks
     builder.Services.AddInfrastructure(builder.Configuration);
 
+    // Autenticação JWT (Bearer) + autorização. Configuração na seção "Jwt" do appsettings.
+    builder.Services.AddJwtAuthentication();
+
     // Add services to the container.
 
     builder.Services.AddScoped<IPetService, PetService>();
@@ -46,6 +49,7 @@ try
     builder.Services.AddScoped<IClinicService, ClinicService>();
     builder.Services.AddScoped<IConsultationService, ConsultationService>();
     builder.Services.AddScoped<IPetTimelineService, PetTimelineService>();
+    builder.Services.AddScoped<IAuthService, AuthService>();
 
     // Tratamento global de exceções (IExceptionHandler, .NET 8)
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -64,6 +68,32 @@ try
             Title = "ProntPet API",
             Version = "v1",
             Description = "API de gerenciamento veterinário"
+        });
+
+        // Botão "Authorize" no Swagger: o usuário cola apenas o token (o prefixo "Bearer " é automático).
+        options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            Description = "Informe o token JWT obtido em POST /api/Auth/login."
+        });
+
+        options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+        {
+            {
+                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                    {
+                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
         });
 
         var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -96,6 +126,8 @@ try
 
     app.UseHttpsRedirection();
 
+    // Authentication SEMPRE antes de Authorization: primeiro identifica quem é, depois decide o que pode.
+    app.UseAuthentication();
     app.UseAuthorization();
 
     app.MapControllers();

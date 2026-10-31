@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProntPet.Common;
 using ProntPet.dtos;
@@ -10,6 +11,7 @@ namespace ProntPet.Controllers
     /// <summary>
     /// Gerencia o cadastro e as operações de pets vinculados a tutores.
     /// </summary>
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class PetController : ControllerBase

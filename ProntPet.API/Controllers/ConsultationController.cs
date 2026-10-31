@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProntPet.Common;
 using ProntPet.Dtos;
@@ -9,6 +10,7 @@ namespace ProntPet.Controllers
     /// <summary>
     /// Gerencia as consultas veterinárias vinculadas a prontuários e clínicas.
     /// </summary>
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ConsultationController : ControllerBase

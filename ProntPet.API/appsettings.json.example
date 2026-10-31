@@ -12,5 +12,11 @@
   "MongoDb": {
     "ConnectionString": "mongodb://localhost:27017",
     "DatabaseName": "prontpet"
+  },
+  "Jwt": {
+    "Key": "uma-chave-secreta-sua-com-no-minimo-32-caracteres",
+    "Issuer": "ProntPet.API",
+    "Audience": "ProntPet.Clients",
+    "ExpirationMinutes": 120
   }
 }

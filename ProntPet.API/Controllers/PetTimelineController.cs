@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProntPet.Common;
 using ProntPet.Dtos;
@@ -9,6 +10,7 @@ namespace ProntPet.Controllers
     /// <summary>
     /// Gerencia a linha do tempo clínica dos pets (eventos e anotações armazenados no MongoDB).
     /// </summary>
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class PetTimelineController : ControllerBase
