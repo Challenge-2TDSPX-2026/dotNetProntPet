@@ -11,6 +11,14 @@ public class MongoDbContext
     {
         var settings = options.Value;
 
+        if (string.IsNullOrWhiteSpace(settings.ConnectionString) ||
+            string.IsNullOrWhiteSpace(settings.DatabaseName))
+        {
+            throw new InvalidOperationException(
+                "Configuração do MongoDB ausente. Defina 'MongoDb:ConnectionString' e " +
+                "'MongoDb:DatabaseName' no appsettings.json.");
+        }
+
         var clientSettings = MongoClientSettings.FromConnectionString(settings.ConnectionString);
         clientSettings.ServerApi = new ServerApi(ServerApiVersion.V1);
         clientSettings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
